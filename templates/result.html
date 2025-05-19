@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>検索結果</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f8f9fa;
+        }
+        h1 {
+            color: #333333;
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #ffffff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+
+        }
+        .result {
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .alert {
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #f5c6cb;
+            border-radius: 5px;
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        input[type="submit"]{
+            background-color: #006400;
+            color: #ffffff;
+	        border: solid 3px #006400;
+	        border-radius: 10px;
+        }
+	    input[type="submit"]:hover {
+            background-color: #ffffff;
+	        color: #13522f;
+	        border: solid 3px #696969;
+	        border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    
+    <h1>検索結果</h1>
+    <div class="container">
+        <p>検索数は <strong>{{ count }}</strong> 件です</p>
+
+        {% if results %}
+            <table border="1">
+                <tr>
+                    <th>科目番号</th>
+                    <th>科目名</th>
+                </tr>
+                {% for result in results %}
+                <tr>
+                    <td>{{ result["科⽬番号"] }}</td>
+                    <td><a href="{{ url_for('show_graph', subject_id=result['科⽬番号']) }}">{{ result["科⽬名称"] }}</a></td>
+                <!--url-forはpythonにて関数show_graphをつかったため-->
+                </tr>
+                {% endfor %}
+            </table>
+        {% else %}
+            <div class="alert"><strong>見つかりませんでした</strong></div>
+            <p>条件を変えて再検索してみてください。<br>以下に当てはまるときには成績分布が存在しない場合があります。
+            
+                <li>科目名あるいは科目番号の選択を誤っている</li>
+                <li>2024年度開講されていない</li>
+                <li>成績分布が存在しない（例：知的探求の世界、インターンシップなど）</li>
+
+            </p>
+        {% endif %}
+
+        <form method="POST" action="/back">
+            <input type="submit" value="検索ページに戻る">
+        </form>
+    </div>
+</body>
+</html>
