@@ -15,7 +15,7 @@ app = Flask(__name__)
 
 
 # Excel 読み込み
-df = pd.read_excel("date/grades_2024.xlsx", sheet_name="Table 1")
+df = pd.read_excel("date/grades_full.xlsx", sheet_name="average")
 
 @app.route("/report.html")
 def report():
