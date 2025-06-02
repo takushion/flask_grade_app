@@ -1,0 +1,62 @@
+ body {
+  font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;
+  background-color: #eef2f7;
+  text-align: center;
+  margin: 0;
+  padding: 0;
+}
+
+h2 {
+  color: #1a237e;
+  margin-top: 40px;
+  font-size: 28px;
+  letter-spacing: 1px;
+}
+
+img {
+  border: 3px solid #ccc;
+  border-radius: 12px;
+  margin-top: 25px;
+  max-width: 85%;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+
+img:hover {
+  transform: scale(1.03);
+}
+
+input[type="submit"] {
+  font-size: 18px;
+  padding: 12px 24px;
+  margin: 20px 10px 0 0;
+  border: 2px solid #388e3c;
+  border-radius: 8px;
+  background-color: #4caf50;
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+input[type="submit"]:hover {
+  background-color: #66bb6a;
+  border-color: #2e7d32;
+  color: #fff;
+  transform: scale(1.05);
+}
+
+@media screen and (max-width: 600px) {
+  h2 {
+    font-size: 22px;
+  }
+
+  input[type="submit"] {
+    font-size: 16px;
+    padding: 10px 20px;
+  }
+
+  img {
+    max-width: 95%;
+  }
+}
+     
