@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ subject_name }} の成績分布</title>
+  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+  <script type="text/javascript">
+    google.charts.load('current', {'packages':['corechart']});
+    google.charts.setOnLoadCallback(drawChart);
+
+    function drawChart() {
+      const count = {{ counts | tojson }};
+      const data = google.visualization.arrayToDataTable([
+        ['評価', '人数'],
+        ['A+', count[0]],
+        ['A',  count[1]],
+        ['B',  count[2]],
+        ['C',  count[3]],
+        ['D',  count[4]]
+      ]);
+      const options = {
+        title: '{{ subject_name }} の成績分布',
+        pieHole: 0.1
+      };
+
+      const chart = new google.visualization.PieChart(document.getElementById('piechart'));
+      chart.draw(data, options);
+    }
+  </script>
+</head>
+<body>
+  <div id="piechart" style="width: 700px; height: 500px; margin: auto;"></div>
+  <p>年度切替: 
+  {% set years = ['2022', '2023', '2024', 'average'] %}
+  {% for y in years %}
+    {% if y != year %}
+      <a href="{{ url_for('show_graph', subject_id=subject_id) }}?year={{ y }}">{{ y }}</a>
+      {% if not loop.last %} | {% endif %}
+    {% else %}
+      <strong>{{ y }}</strong>{% if not loop.last %} | {% endif %}
+    {% endif %}
+  {% endfor %}
+  </p>
+  <form method="POST" action="/back">    
+      <input type="submit" value="検索ページに戻る">
+  </form>
+
+</body>
+</html>

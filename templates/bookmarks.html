@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="robots" content="none">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ブックマーク一覧</title>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; /* モダンなフォントスタック */
+            margin: 0; padding: 8px; /* bodyのpaddingを少し減らす */
+            background-color: #f4f6f8; /* 背景色を少し変更 */
+            color: #333; line-height: 1.5; /* 行の高さを設定 */
+        }
+        .container {
+            width: 100%; max-width: 700px; /* 最大幅を少し調整 */
+            margin: 0 auto; padding: 8px;
+        }
+        h1 {
+            color: #2c3e50; text-align: center; font-size: 1.5em;
+            margin-top: 15px; margin-bottom: 25px; font-weight: 600;
+        }
+        .navigation-links { text-align: center; margin-bottom: 25px; }
+        .nav-button {
+            background-color: #007bff; color: #fff; border: none; /* ボタンデザイン変更 */
+            border-radius: 6px; padding: 10px 20px; text-decoration: none;
+            display: inline-block; cursor: pointer; margin: 5px; font-size: 0.9em;
+            transition: background-color 0.2s ease;
+        }
+        .nav-button:hover { background-color: #0056b3; }
+
+        #bookmarks-content {
+            display: flex; flex-direction: column; align-items: stretch;
+            width: 100%; gap: 20px; /* gapを少し調整 */
+        }
+        .bookmark-item {
+            width: 100%; padding: 15px; border: 1px solid #e0e0e0; /* border色調整 */
+            border-radius: 8px; background-color: #ffffff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.08); /* box-shadow調整 */
+        }
+        .bookmark-item h3 {
+            margin-top: 0; margin-bottom: 12px; color: #34495e;
+            font-size: 1.1em; text-align: center; font-weight: 600;
+            word-break: break-word; /* 長い単語も改行 */
+        }
+        .chart-container {
+            width: 100%;
+            aspect-ratio: 1.5 / 1; /* 横:縦 = 1.5:1 少し横長に。1/1 (正方形) も良い */
+            max-height: 320px;     /* 最大高さを調整 */
+            margin: 0 auto;
+            overflow: hidden;   /* はみ出し防止 */
+            position: relative;
+            background-color: #fdfdfd; /* グラフコンテナに薄い背景色（任意） */
+        }
+        .controls {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-top: 15px; flex-wrap: wrap; gap: 10px;
+            padding-top: 10px; border-top: 1px solid #eee; /* 区切り線 */
+        }
+        .controls > div { display: flex; align-items: center; gap: 8px; font-size: 0.85em; }
+        .remove-bookmark-btn {
+            background-color: #e74c3c; color: white; border: none; padding: 7px 12px;
+            border-radius: 5px; cursor: pointer; font-size: 0.8em;
+            transition: background-color 0.2s ease;
+        }
+        .remove-bookmark-btn:hover { background-color: #c0392b; }
+        .year-selector {
+            font-size: 0.85em; padding: 5px 7px; border-radius: 5px;
+            border: 1px solid #ccc; background-color: #fff;
+        }
+        .loading-text, .error-text {
+            display: flex; align-items: center; justify-content: center;
+            height: 100px; /* ある程度の高さを確保 */
+            text-align: center; padding: 20px; color: #555; font-size: 0.9em;
+        }
+        .error-text { color: #c0392b; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ブックマーク一覧</h1>
+        <div class="navigation-links">
+            <a href="{{ url_for('report') }}" class="nav-button">検索ページに戻る</a>
+        </div>
+        <div id="bookmarks-content">
+            <p class="loading-text">ブックマークを読み込み中...</p>
+        </div>
+    </div>
+
+    <script>
+        const BOOKMARKS_KEY = 'subjectBookmarks';
+        const availableYears = ['2022', '2023', '2024', 'average'];
+        
+        // --- グローバル変数定義 ---
+        let activeChartObjects = {}; // { elementId: { chart: GoogleChartObject, subjectData: Object, dataTable: GoogleDataTable } }
+        let googleChartsLoaded = false;
+        let initialChartsRendered = false;
+        let resizeDebounceTimeout;
+
+        // --- Google Chartsライブラリ読み込み ---
+        google.charts.load('current', {'packages':['corechart']});
+        google.charts.setOnLoadCallback(() => {
+            googleChartsLoaded = true;
+            if (document.readyState === "complete" || document.readyState === "interactive") {
+                loadBookmarkedSubjectsAndDraw();
+            } else {
+                // DOMContentLoadedがまだなら待つ (通常はcharts.loadのコールバックが後)
+            }
+        });
+
+        // --- データ取得とDOM操作関連関数 (変更少なめ) ---
+        function getBookmarks() { /* 変更なし */
+            const bookmarks = localStorage.getItem(BOOKMARKS_KEY);
+            return bookmarks ? JSON.parse(bookmarks) : [];
+        }
+        function saveBookmarks(bookmarks) { /* 変更なし */
+            localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(bookmarks));
+        }
+        async function fetchSubjectDataForChart(subjectId, year = 'average') { /* 変更なし */
+            try {
+                const response = await fetch(`/api/subject_grade_data/${subjectId}?year=${year}`);
+                if (!response.ok) {
+                    let errorData = { error: `サーバーエラー (HTTP ${response.status})` }; 
+                    try { errorData = await response.json(); } catch (e) {
+                        const errorText = await response.text(); errorData.error = errorText || errorData.error; 
+                        console.warn(`API Error (not JSON): ${response.status}, ${errorText.substring(0,100)}`);
+                    }
+                    const message = errorData.error || `不明なサーバーエラー (HTTP ${response.status})`;
+                    return { error: `データ取得失敗: ${message} (科目ID: ${subjectId}, 年度: ${year})` };
+                }
+                return await response.json();
+            } catch (networkError) { 
+                return { error: `ネットワーク接続エラー (科目ID: ${subjectId}, 年度: ${year})` };
+            }
+        }
+        
+        // --- グラフ描画関数 (動的オプションとインスタンス管理) ---
+        function drawPieChart(elementId, subjectData) {
+            const chartElement = document.getElementById(elementId);
+            if (!chartElement) { console.error(`drawPieChart: Element ${elementId} not found.`); return; }
+
+            if (!subjectData || subjectData.error) {
+                chartElement.innerHTML = `<p class="error-text">グラフデータ表示エラー:<br>${subjectData?.error || '詳細不明'}</p>`;
+                return;
+            }
+            if (!subjectData.counts || subjectData.counts.length !== 5) {
+                 chartElement.innerHTML = `<p class="error-text">成績データ形式不備</p>`; return;
+            }
+
+            const dataTable = google.visualization.arrayToDataTable([
+                ['評価', '人数'],
+                ['A+', subjectData.counts[0]], ['A', subjectData.counts[1]],
+                ['B', subjectData.counts[2]], ['C', subjectData.counts[3]],
+                ['D', subjectData.counts[4]]
+            ]);
+
+            const containerWidth = chartElement.offsetWidth; // 現在のコンテナ幅を取得
+            let dynamicOptions = {
+                title: `${subjectData.subject_name} (${subjectData.year})`,
+                pieHole: 0.1, width: '100%', height: '100%', fontName: 'Arial',
+                legend: { position: 'bottom', alignment: 'center', textStyle: { fontSize: 10, color: '#444' } },
+                titleTextStyle: { fontSize: 12, bold: false, color: '#333' },
+                tooltip: { textStyle: { fontSize: 11 } },
+                // chartAreaは描画領域。コンテナサイズに応じて調整する
+                chartArea: { left: '8%', top: '12%', width: '84%', height: '65%' } // デフォルト
+            };
+
+            // コンテナ幅に応じたオプションの微調整
+            if (containerWidth < 280) { // 非常に狭い場合
+                dynamicOptions.titleTextStyle.fontSize = 9;
+                dynamicOptions.legend.position = 'none'; // 凡例を非表示
+                dynamicOptions.chartArea = { left: '5%', top: '10%', width: '90%', height: '80%' }; // 描画領域を最大化
+            } else if (containerWidth < 400) { // やや狭い場合
+                dynamicOptions.titleTextStyle.fontSize = 10;
+                dynamicOptions.legend.textStyle.fontSize = 9;
+                dynamicOptions.chartArea = { left: '6%', top: '12%', width: '88%', height: '68%' };
+            }
+            // それ以上はデフォルトのchartAreaを使用
+
+            let chartObject = activeChartObjects[elementId]?.chart;
+            if (!chartObject) {
+                chartObject = new google.visualization.PieChart(chartElement);
+            }
+            
+            activeChartObjects[elementId] = { chart: chartObject, subjectData: subjectData, dataTable: dataTable };
+            chartObject.draw(dataTable, dynamicOptions);
+        }
+
+        // --- DOM要素生成と初期描画フロー ---
+        function createBookmarkDOM(bookmark, index) {
+            const itemDiv = document.createElement('div'); itemDiv.className = 'bookmark-item';
+            const title = document.createElement('h3'); title.textContent = `${bookmark.name} (ID: ${bookmark.id})`; itemDiv.appendChild(title);
+            const chartDivId = `chart_div_${bookmark.id.replace(/[^a-zA-Z0-9_]/g, "")}_${index}`;
+            const chartDiv = document.createElement('div'); chartDiv.id = chartDivId; chartDiv.className = 'chart-container';
+            chartDiv.innerHTML = '<p class="loading-text">グラフ領域準備中...</p>'; itemDiv.appendChild(chartDiv);
+            
+            const controlsDiv = document.createElement('div'); controlsDiv.className = 'controls';
+            const yearToDisplay = activeChartObjects[chartDivId]?.subjectData?.year || bookmark.currentYear || 'average';
+            const yearSelector = createYearSelectorElement(bookmark.id, yearToDisplay, chartDivId);
+            const yearSelectorContainer = document.createElement('div');
+            const yearLabel = document.createElement('span'); yearLabel.textContent = '表示年度:'; yearSelectorContainer.appendChild(yearLabel);
+            yearSelectorContainer.appendChild(yearSelector); controlsDiv.appendChild(yearSelectorContainer);
+            
+            const removeBtn = document.createElement('button'); removeBtn.className = 'remove-bookmark-btn'; removeBtn.textContent = 'ブックマーク解除';
+            removeBtn.onclick = () => { removeBookmark(bookmark.id); loadBookmarkedSubjectsAndDraw(); }; // 削除後再描画
+            controlsDiv.appendChild(removeBtn);
+            itemDiv.appendChild(controlsDiv);
+            return { itemDiv, chartDivId };
+        }
+        
+        async function loadBookmarkedSubjectsAndDraw() {
+            if (!googleChartsLoaded) { console.log("Google Chartsライブラリ未読込"); return; }
+
+            const bookmarks = getBookmarks();
+            const contentDiv = document.getElementById('bookmarks-content');
+            
+            contentDiv.innerHTML = ''; // 既存の表示をクリア
+            activeChartObjects = {};   // キャッシュもクリア
+
+            if (bookmarks.length === 0) {
+                contentDiv.innerHTML = '<p class="loading-text">ブックマークされている科目はまだありません。</p>';
+                initialChartsRendered = false; // チャートがないのでリセット
+                return;
+            }
+
+            // まずDOM要素を全て生成して配置
+            bookmarks.forEach((bookmark, index) => {
+                const { itemDiv } = createBookmarkDOM(bookmark, index);
+                contentDiv.appendChild(itemDiv);
+            });
+
+            // 次に各チャートのデータを取得して描画 (非同期処理を考慮)
+            // Promise.allで全てのデータ取得と描画処理を並行して行う
+            const drawPromises = bookmarks.map(async (bookmark, index) => {
+                const chartDivId = `chart_div_${bookmark.id.replace(/[^a-zA-Z0-9_]/g, "")}_${index}`;
+                const yearToFetch = bookmark.currentYear || 'average';
+                const subjectData = await fetchSubjectDataForChart(bookmark.id, yearToFetch);
+                
+                // createBookmarkDOMで設定したloading textを上書きするために、ここで再度 chartElement を取得
+                const chartElement = document.getElementById(chartDivId);
+                if (chartElement) { // chartElementがDOMに存在することを確認
+                     drawPieChart(chartDivId, subjectData);
+                } else {
+                    console.error(`loadBookmarkedSubjectsAndDraw: Element ${chartDivId} not found in DOM for drawing.`);
+                }
+            });
+
+            try {
+                await Promise.all(drawPromises);
+                initialChartsRendered = true; // 全ての初期描画が完了
+                console.log("全ブックマークグラフの初期描画完了");
+            } catch (error) {
+                console.error("ブックマークグラフ描画中にエラー:", error);
+                contentDiv.innerHTML = '<p class="error-text">一部グラフの表示に失敗しました。</p>';
+                initialChartsRendered = false;
+            }
+        }
+
+        function createYearSelectorElement(subjectId, currentSelectedYear, chartDivId) {
+            const selector = document.createElement('select');
+            selector.className = 'year-selector';
+            availableYears.forEach(y => {
+                const option = document.createElement('option'); option.value = y; option.textContent = y;
+                if (y === currentSelectedYear) option.selected = true;
+                selector.appendChild(option);
+            });
+            selector.addEventListener('change', async function() {
+                const newYear = this.value;
+                const chartElement = document.getElementById(chartDivId);
+                if (chartElement) chartElement.innerHTML = '<p class="loading-text">グラフを更新中...</p>';
+                
+                let bookmarks = getBookmarks();
+                let bmToUpdate = bookmarks.find(b => b.id === subjectId);
+                if (bmToUpdate) bmToUpdate.currentYear = newYear; // currentYearを更新
+                saveBookmarks(bookmarks); // ローカルストレージに保存
+
+                const updatedSubjectData = await fetchSubjectDataForChart(subjectId, newYear);
+                drawPieChart(chartDivId, updatedSubjectData); // 更新されたデータで再描画
+            });
+            return selector;
+        }
+
+        // --- ウィンドウリサイズ時の処理 ---
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeDebounceTimeout);
+            resizeDebounceTimeout = setTimeout(() => {
+                if (!googleChartsLoaded || !initialChartsRendered || Object.keys(activeChartObjects).length === 0) {
+                    return; // 描画対象がない、またはライブラリ未ロードなら何もしない
+                }
+                console.log("ウィンドウリサイズ検知 - グラフ再描画開始");
+                Object.keys(activeChartObjects).forEach(elementId => {
+                    const chartInfo = activeChartObjects[elementId];
+                    if (chartInfo && chartInfo.chart && chartInfo.subjectData) {
+                        // 保存されているsubjectDataを使用して再描画 (データ再取得なし)
+                        drawPieChart(elementId, chartInfo.subjectData);
+                    }
+                });
+            }, 300); // 300ミリ秒のデバウンス
+        });
+
+        // --- 初期読み込みトリガー ---
+        document.addEventListener('DOMContentLoaded', () => {
+            if (googleChartsLoaded && !initialChartsRendered) {
+                // DOMContentLoaded時点でChartsライブラリがロード済みだが、まだ初期描画が走っていない場合
+                loadBookmarkedSubjectsAndDraw();
+            }
+        });
+    </script>
+</body>
+</html>

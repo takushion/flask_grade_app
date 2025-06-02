@@ -12,10 +12,11 @@ import io
 #osをつかいたいフォルダ、すなわちここにはhtmlやexcelファイルが入っているフォルダのパス。cje1installのなかの装備
 
 app = Flask(__name__)
-#cje1gw.run_with(app)#ここはわからん　cje1gwはcje1installのなかにあるもの。cje1installのなかでやっていたこと。
+
 
 # Excel 読み込み
-df = pd.read_excel("date/grades_2024.xlsx", sheet_name="Table 1")
+year = "average"  # デフォルトのシート名
+df = pd.read_excel("date/grades_full.xlsx", sheet_name=year)
 
 @app.route("/report.html")
 def report():
