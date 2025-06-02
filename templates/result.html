@@ -65,11 +65,13 @@
                 <tr>
                     <th>科目番号</th>
                     <th>科目名</th>
+                    <th>年度</th>
                 </tr>
                 {% for result in results %}
                 <tr>
                     <td>{{ result["科⽬番号"] }}</td>
-                    <td><a href="{{ url_for('show_graph', subject_id=result['科⽬番号']) }}">{{ result["科⽬名称"] }}</a></td>
+                    <td>{{ result["科⽬名称"] }}</td>
+                    <td><a href="{{ url_for('show_graph', subject_id=result['科⽬番号'], year='2024') }}">2024, </a><a href="{{ url_for('show_graph', subject_id=result['科⽬番号'], year='2023') }}">2023, </a><a href="{{ url_for('show_graph', subject_id=result['科⽬番号'], year='2022') }}">2022, </a><a href="{{ url_for('show_graph', subject_id=result['科⽬番号'], year='average') }}">average</a></td>
                 <!--url-forはpythonにて関数show_graphをつかったため-->
                 </tr>
                 {% endfor %}

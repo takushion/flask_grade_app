@@ -30,5 +30,20 @@
 </head>
 <body>
   <div id="piechart" style="width: 700px; height: 500px; margin: auto;"></div>
+  <p>年度切替: 
+  {% set years = ['2022', '2023', '2024', 'average'] %}
+  {% for y in years %}
+    {% if y != year %}
+      <a href="{{ url_for('show_graph', subject_id=subject_id) }}?year={{ y }}">{{ y }}</a>
+      {% if not loop.last %} | {% endif %}
+    {% else %}
+      <strong>{{ y }}</strong>{% if not loop.last %} | {% endif %}
+    {% endif %}
+  {% endfor %}
+  </p>
+  <form method="POST" action="/back">    
+      <input type="submit" value="検索ページに戻る">
+  </form>
+
 </body>
 </html>
