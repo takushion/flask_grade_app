@@ -23,7 +23,6 @@
             padding: 20px;
             background-color: #ffffff;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-
         }
         .result {
             padding: 10px;
@@ -40,17 +39,42 @@
             background-color: #f8d7da;
             color: #721c24;
         }
-        input[type="submit"]{
+        input[type="submit"], .nav-button { /* ナビゲーションボタンスタイル */
             background-color: #006400;
             color: #ffffff;
-	        border: solid 3px #006400;
-	        border-radius: 10px;
+            border: solid 3px #006400;
+            border-radius: 10px;
+            padding: 8px 15px;
+            text-decoration: none; /* ボタンとしてスタイル設定された<a>用 */
+            display: inline-block; /* ボタンとしてスタイル設定された<a>用 */
+            cursor: pointer;
+            margin-top: 10px;
+            margin-right: 10px; /* ボタン間のスペース */
         }
-	    input[type="submit"]:hover {
+        input[type="submit"]:hover, .nav-button:hover {
             background-color: #ffffff;
-	        color: #13522f;
-	        border: solid 3px #696969;
-	        border-radius: 10px;
+            color: #13522f;
+            border: solid 3px #696969;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .bookmark-checkbox {
+            margin-right: 5px;
+        }
+        .navigation-links { /* ナビゲーションボタン用コンテナ */
+            margin-bottom: 20px;
+            text-align: center; /* ナビゲーションボタンを中央揃え */
         }
     </style>
 </head>
@@ -58,38 +82,97 @@
     
     <h1>検索結果</h1>
     <div class="container">
+        <div class="navigation-links">
+            <a href="{{ url_for('report') }}" class="nav-button">検索ページに戻る</a>
+            <a href="{{ url_for('bookmarks_page') }}" class="nav-button">ブックマーク一覧</a>
+        </div>
+
         <p>検索数は <strong>{{ count }}</strong> 件です</p>
+
+        {% if error %}
+            <div class="alert"><strong>エラー:</strong> {{ error }}</div>
+        {% endif %}
 
         {% if results %}
             <table border="1">
                 <tr>
+                    <th>ブックマーク</th>
                     <th>科目番号</th>
                     <th>科目名</th>
-                    <th>年度</th>
+                    <th>年度別グラフ</th>
                 </tr>
                 {% for result in results %}
                 <tr>
+                    <td>
+                        <input type="checkbox" class="bookmark-checkbox" 
+                               data-subject-id="{{ result['科⽬番号'] | string }}" 
+                               data-subject-name="{{ result['科⽬名称'] }}"
+                               onchange="toggleBookmark(this)">
+                    </td>
                     <td>{{ result["科⽬番号"] }}</td>
                     <td>{{ result["科⽬名称"] }}</td>
-                    <td><a href="{{ url_for('show_graph', subject_id=result['科⽬番号'], year='2024') }}">2024, </a><a href="{{ url_for('show_graph', subject_id=result['科⽬番号'], year='2023') }}">2023, </a><a href="{{ url_for('show_graph', subject_id=result['科⽬番号'], year='2022') }}">2022, </a><a href="{{ url_for('show_graph', subject_id=result['科⽬番号'], year='average') }}">average</a></td>
-                <!--url-forはpythonにて関数show_graphをつかったため-->
+                    <td>
+                        <a href="{{ url_for('show_graph', subject_id=result['科⽬番号'] | string, year='2024') }}">2024</a>, 
+                        <a href="{{ url_for('show_graph', subject_id=result['科⽬番号'] | string, year='2023') }}">2023</a>, 
+                        <a href="{{ url_for('show_graph', subject_id=result['科⽬番号'] | string, year='2022') }}">2022</a>, 
+                        <a href="{{ url_for('show_graph', subject_id=result['科⽬番号'] | string, year='average') }}">average</a>
+                    </td>
                 </tr>
                 {% endfor %}
             </table>
-        {% else %}
-            <div class="alert"><strong>見つかりませんでした</strong></div>
+        {% elif not error %} <div class="alert"><strong>見つかりませんでした</strong></div>
             <p>条件を変えて再検索してみてください。<br>以下に当てはまるときには成績分布が存在しない場合があります。
-            
-                <li>科目名あるいは科目番号の選択を誤っている</li>
-                <li>2024年度開講されていない</li>
-                <li>成績分布が存在しない（例：知的探求の世界、インターンシップなど）</li>
-
+                <ul>
+                    <li>科目名あるいは科目番号の選択を誤っている</li>
+                    <li>指定した年度に開講されていない (この検索は主に'average'シートを参照します)</li>
+                    <li>成績分布が存在しない（例：知的探求の世界、インターンシップなど）</li>
+                </ul>
             </p>
         {% endif %}
+        </div>
 
-        <form method="POST" action="/back">
-            <input type="submit" value="検索ページに戻る">
-        </form>
-    </div>
+    <script>
+        const BOOKMARKS_KEY = 'subjectBookmarks';
+
+        function getBookmarks() {
+            const bookmarks = localStorage.getItem(BOOKMARKS_KEY);
+            return bookmarks ? JSON.parse(bookmarks) : [];
+        }
+
+        function saveBookmarks(bookmarks) {
+            localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(bookmarks));
+        }
+
+        function toggleBookmark(checkbox) {
+            const subjectId = String(checkbox.dataset.subjectId); // 文字列であることを確認
+            const subjectName = checkbox.dataset.subjectName;
+            let bookmarks = getBookmarks();
+
+            if (checkbox.checked) {
+                // まだ存在しない場合はブックマークに追加
+                if (!bookmarks.find(bm => bm.id === subjectId)) {
+                    bookmarks.push({ id: subjectId, name: subjectName });
+                }
+            } else {
+                // ブックマークから削除
+                bookmarks = bookmarks.filter(bm => bm.id !== subjectId);
+            }
+            saveBookmarks(bookmarks);
+        }
+
+        function initializeBookmarkCheckboxes() {
+            const bookmarks = getBookmarks();
+            const checkboxes = document.querySelectorAll('.bookmark-checkbox');
+            checkboxes.forEach(checkbox => {
+                const subjectId = String(checkbox.dataset.subjectId);
+                if (bookmarks.find(bm => bm.id === subjectId)) {
+                    checkbox.checked = true;
+                }
+            });
+        }
+
+        // ページ読み込み時にチェックボックスを初期化
+        document.addEventListener('DOMContentLoaded', initializeBookmarkCheckboxes);
+    </script>
 </body>
 </html>

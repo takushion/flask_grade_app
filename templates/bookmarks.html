@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="robots" content="none">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ブックマーク一覧</title>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f8f9fa; }
+        h1 { color: #333; text-align: center; margin-bottom: 20px; }
+        .container { max-width: 900px; margin: 0 auto; padding: 20px; background-color: #fff; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .nav-button {
+            background-color: #006400; color: #fff; border: solid 3px #006400;
+            border-radius: 10px; padding: 8px 15px; text-decoration: none;
+            display: inline-block; cursor: pointer; margin: 5px;
+        }
+        .nav-button:hover { background-color: #fff; color: #13522f; border-color: #696969; }
+        .navigation-links { text-align: center; margin-bottom: 20px; }
+        .bookmark-item { margin-bottom: 30px; padding: 15px; border: 1px solid #ccc; border-radius: 8px; background-color: #f9f9f9; }
+        .bookmark-item h3 { margin-top: 0; color: #0056b3; }
+        .chart-container { width: 100%; max-width: 600px; height: 350px; margin: 10px auto; }
+        /* table { width: 100%; border-collapse: collapse; margin-top: 20px; } /* テーブルは使用しなくなるためコメントアウトまたは削除 */
+        /* th, td { border: 1px solid #ddd; padding: 10px; text-align: left; } */
+        /* th { background-color: #e9ecef; } */
+        .controls { display: flex; justify-content: space-between; align-items: center; margin-top:10px;}
+        .remove-bookmark-btn {
+            background-color: #dc3545; color: white; border: none; padding: 6px 12px;
+            border-radius: 5px; cursor: pointer; font-size: 0.9em;
+        }
+        .remove-bookmark-btn:hover { background-color: #c82333; }
+        .year-selector { font-size: 0.9em; padding: 5px; border-radius: 4px; border: 1px solid #ccc; }
+        .loading-text, .error-text { text-align: center; padding: 15px; color: #555; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ブックマーク一覧</h1>
+        <div class="navigation-links">
+            <a href="{{ url_for('report') }}" class="nav-button">検索ページに戻る</a>
+        </div>
+
+        <div id="bookmarks-content">
+            <p class="loading-text">ブックマークを読み込み中...</p>
+        </div>
+    </div>
+
+    <script>
+        const BOOKMARKS_KEY = 'subjectBookmarks';
+        const availableYears = ['2022', '2023', '2024', 'average']; // 選択可能な年度
+
+        function getBookmarks() {
+            const bookmarks = localStorage.getItem(BOOKMARKS_KEY);
+            return bookmarks ? JSON.parse(bookmarks) : [];
+        }
+
+        function saveBookmarks(bookmarks) {
+            localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(bookmarks));
+        }
+
+        function removeBookmark(subjectId) {
+            let bookmarks = getBookmarks();
+            bookmarks = bookmarks.filter(bm => String(bm.id) !== String(subjectId)); // 文字列比較を確認
+            saveBookmarks(bookmarks);
+            loadBookmarkedSubjects(); // 表示を更新
+        }
+
+        async function fetchSubjectDataForChart(subjectId, year = 'average') {
+            try {
+                const response = await fetch(`/api/subject_grade_data/${subjectId}?year=${year}`);
+                if (!response.ok) {
+                    let errorData = { error: `サーバーエラー (HTTP ${response.status})` }; 
+                    try {
+                        errorData = await response.json();
+                    } catch (e) {
+                        const errorText = await response.text();
+                        errorData.error = errorText || errorData.error; 
+                        console.warn(`サーバーからのエラー応答がJSON形式ではありませんでした。ステータス: ${response.status}, 内容: ${errorText.substring(0,100)}...`);
+                    }
+                    const message = errorData.error || `不明なサーバーエラー (HTTP ${response.status})`;
+                    console.error(`データ取得エラー (科目ID: ${subjectId}, 年度: ${year}): ${message}`, response);
+                    return { error: `データ取得失敗: ${message} (科目ID: ${subjectId}, 年度: ${year})` };
+                }
+                return await response.json();
+            } catch (networkError) { 
+                console.error(`ネットワークエラー (科目ID: ${subjectId}, 年度: ${year}):`, networkError);
+                return { error: `ネットワーク接続に問題がある可能性があります。後ほど再試行してください。(科目ID: ${subjectId}, 年度: ${year})` };
+            }
+        }
+
+        function drawPieChart(elementId, subjectData) {
+            const chartElement = document.getElementById(elementId);
+            if (!chartElement) {
+                console.error("チャート要素が見つかりません:", elementId);
+                return;
+            }
+
+            if (!subjectData || subjectData.error || !subjectData.counts || subjectData.counts.length !== 5) {
+                chartElement.innerHTML = `<p class="error-text">グラフデータを読み込めませんでした。${subjectData?.error || ''}</p>`;
+                return;
+            }
+
+            const data = google.visualization.arrayToDataTable([
+                ['評価', '人数'],
+                ['A+', subjectData.counts[0]],
+                ['A',  subjectData.counts[1]],
+                ['B',  subjectData.counts[2]],
+                ['C',  subjectData.counts[3]],
+                ['D',  subjectData.counts[4]]
+            ]);
+            const options = {
+                title: `${subjectData.subject_name} (${subjectData.year}) の成績分布`,
+                pieHole: 0.1,
+                height: 350, 
+                width: '100%',
+                chartArea: { width: '90%', height: '75%' },
+                legend: { position: 'bottom' }
+            };
+            const chart = new google.visualization.PieChart(chartElement);
+            chart.draw(data, options);
+        }
+        
+        function createYearSelectorElement(subjectId, currentSelectedYear, chartDivId, bookmarkItemDiv) {
+            const selector = document.createElement('select');
+            selector.className = 'year-selector';
+            
+            availableYears.forEach(y => {
+                const option = document.createElement('option');
+                option.value = y;
+                option.textContent = y;
+                if (y === currentSelectedYear) {
+                    option.selected = true;
+                }
+                selector.appendChild(option);
+            });
+
+            selector.addEventListener('change', async function() {
+                const newYear = this.value;
+                const chartContainer = document.getElementById(chartDivId);
+                if (chartContainer) chartContainer.innerHTML = '<p class="loading-text">グラフを更新中...</p>';
+                
+                const updatedSubjectData = await fetchSubjectDataForChart(subjectId, newYear);
+                drawPieChart(chartDivId, updatedSubjectData);
+            });
+            return selector;
+        }
+
+        async function displayBookmarksAsIndividualGraphs(bookmarks, contentDiv) {
+            google.charts.load('current', {'packages':['corechart']});
+            google.charts.setOnLoadCallback(async () => {
+                contentDiv.innerHTML = ''; // 読み込み中メッセージをクリア
+                if (bookmarks.length === 0) { // このチェックは loadBookmarkedSubjects にもあるが、念のため
+                    contentDiv.innerHTML = '<p class="loading-text">ブックマークされている科目はまだありません。</p>';
+                    return;
+                }
+                for (let i = 0; i < bookmarks.length; i++) {
+                    const bookmark = bookmarks[i];
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'bookmark-item';
+                    
+                    const title = document.createElement('h3');
+                    title.textContent = `${bookmark.name} (ID: ${bookmark.id})`;
+                    itemDiv.appendChild(title);
+
+                    const chartDivId = `chart_div_${bookmark.id}_${i.toString()}`; // IDが一意になるようにインデックスも利用
+                    const chartDiv = document.createElement('div');
+                    chartDiv.id = chartDivId;
+                    chartDiv.className = 'chart-container';
+                    chartDiv.innerHTML = '<p class="loading-text">グラフを読み込み中...</p>';
+                    itemDiv.appendChild(chartDiv);
+                    
+                    const controlsDiv = document.createElement('div');
+                    controlsDiv.className = 'controls';
+
+                    const defaultYearForDisplay = 'average';
+                    const yearSelector = createYearSelectorElement(bookmark.id, defaultYearForDisplay, chartDivId, itemDiv);
+                    
+                    const yearSelectorContainer = document.createElement('div');
+                    yearSelectorContainer.appendChild(document.createTextNode('表示年度: '));
+                    yearSelectorContainer.appendChild(yearSelector);
+                    controlsDiv.appendChild(yearSelectorContainer);
+
+                    const removeBtn = document.createElement('button');
+                    removeBtn.className = 'remove-bookmark-btn';
+                    removeBtn.textContent = 'ブックマーク解除';
+                    removeBtn.onclick = () => removeBookmark(bookmark.id);
+                    controlsDiv.appendChild(removeBtn);
+                    
+                    itemDiv.appendChild(controlsDiv);
+                    contentDiv.appendChild(itemDiv);
+
+                    const subjectInitialData = await fetchSubjectDataForChart(bookmark.id, defaultYearForDisplay);
+                    drawPieChart(chartDivId, subjectInitialData);
+                }
+            });
+        }
+
+        // displayBookmarksInTableFormat 関数は不要になったため削除しました。
+        // function displayBookmarksInTableFormat(bookmarks, contentDiv) { ... }
+
+        function loadBookmarkedSubjects() {
+            const bookmarks = getBookmarks();
+            const contentDiv = document.getElementById('bookmarks-content');
+
+            if (bookmarks.length === 0) {
+                contentDiv.innerHTML = '<p class="loading-text">ブックマークされている科目はまだありません。</p>';
+                return;
+            }
+
+            // 条件分岐を削除し、常にグラフ表示関数を呼び出す
+            displayBookmarksAsIndividualGraphs(bookmarks, contentDiv);
+            
+            // 以前のロジック (コメントアウト)
+            // if (bookmarks.length <= 3) {
+            //     displayBookmarksAsIndividualGraphs(bookmarks, contentDiv);
+            // } else {
+            //     displayBookmarksInTableFormat(bookmarks, contentDiv); // この行を削除
+            // }
+        }
+
+        // ページの準備ができたらブックマークを読み込む
+        document.addEventListener('DOMContentLoaded', loadBookmarkedSubjects);
+    </script>
+</body>
+</html>
