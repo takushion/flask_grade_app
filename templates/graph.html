@@ -1,57 +1,177 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="robots" content="none">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>グラフ表示</title>
-    <style>
-      body {
-        font-family: 'Arial', sans-serif;
-        background-color: #f4f4f4;
-        text-align: center;
-      }
+  <meta charset="UTF-8">
+  <title>{{ subject_name }} の成績分布</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+  <script type="text/javascript">
+    // --- グローバル変数定義 ---
+    let singleChartObject = null;
+    let singleChartDataTable = null;
+    let singleChartInitialSubjectData = null; // Flaskから渡される元データを保持
+    let singleChartGoogleChartsLoaded = false;
+    let singleChartInitialRendered = false;
+    let singleChartResizeDebounceTimeout;
 
-      h2 {
-        color: #2c3e50;
-        margin-top: 30px;
-      }
+    // --- Google Chartsライブラリ読み込み ---
+    google.charts.load('current', {'packages':['corechart']});
+    google.charts.setOnLoadCallback(() => {
+        singleChartGoogleChartsLoaded = true;
+        if (document.readyState === "complete" || document.readyState === "interactive") {
+            setupAndDrawSingleChart();
+        }
+    });
 
-      img {
-        border: 2px solid #aaa;
+    // --- グラフ描画関数 (動的オプション) ---
+    function drawSinglePieChart() {
+        if (!singleChartInitialSubjectData || !singleChartDataTable) {
+            console.error("drawSinglePieChart: Initial data not ready.");
+            return;
+        }
+        const chartElement = document.getElementById('piechart');
+        if (!chartElement) { console.error("drawSinglePieChart: Chart element 'piechart' not found."); return; }
+
+        const containerWidth = chartElement.offsetWidth;
+        let dynamicOptions = {
+            title: `${singleChartInitialSubjectData.subject_name} (${singleChartInitialSubjectData.year})`,
+            pieHole: 0.1, width: '100%', height: '100%', fontName: 'Arial',
+            legend: { position: 'bottom', alignment: 'center', textStyle: { fontSize: 10, color: '#444' } },
+            titleTextStyle: { fontSize: 12, bold: false, color: '#333' },
+            tooltip: { textStyle: { fontSize: 11 } },
+            chartArea: { left: '8%', top: '12%', width: '84%', height: '65%' }
+        };
+
+        if (containerWidth < 280) {
+            dynamicOptions.titleTextStyle.fontSize = 9;
+            dynamicOptions.legend.position = 'none';
+            dynamicOptions.chartArea = { left: '5%', top: '10%', width: '90%', height: '80%' };
+        } else if (containerWidth < 400) {
+            dynamicOptions.titleTextStyle.fontSize = 10;
+            dynamicOptions.legend.textStyle.fontSize = 9;
+            dynamicOptions.chartArea = { left: '6%', top: '12%', width: '88%', height: '68%' };
+        }
+        
+        if (!singleChartObject) {
+            singleChartObject = new google.visualization.PieChart(chartElement);
+        }
+        singleChartObject.draw(singleChartDataTable, dynamicOptions);
+    }
+
+    // --- 初期データ設定と初回描画 ---
+    function setupAndDrawSingleChart() {
+        if (!singleChartGoogleChartsLoaded) { console.log("setupAndDrawSingleChart: Google Charts not loaded yet."); return; }
+
+        const countsFromServer = {{ counts | tojson }};
+        const subjectNameFromServer = {{ subject_name | tojson }};
+        const yearFromServer = {{ year | tojson }};
+
+        singleChartInitialSubjectData = {
+            counts: countsFromServer,
+            subject_name: subjectNameFromServer,
+            year: yearFromServer
+        };
+
+        singleChartDataTable = google.visualization.arrayToDataTable([
+            ['評価', '人数'],
+            ['A+', countsFromServer[0]], ['A', countsFromServer[1]],
+            ['B', countsFromServer[2]], ['C', countsFromServer[3]],
+            ['D', countsFromServer[4]]
+        ]);
+        
+        drawSinglePieChart(); // 初回描画
+        singleChartInitialRendered = true;
+        console.log("単一グラフの初期描画完了");
+    }
+
+    // --- ウィンドウリサイズ時の処理 ---
+    window.addEventListener('resize', () => {
+        clearTimeout(singleChartResizeDebounceTimeout);
+        singleChartResizeDebounceTimeout = setTimeout(() => {
+            if (singleChartGoogleChartsLoaded && singleChartInitialRendered && singleChartObject && singleChartDataTable) {
+                console.log("単一グラフページ: ウィンドウリサイズ検知 - グラフ再描画");
+                drawSinglePieChart();
+            }
+        }, 300);
+    });
+    
+    // --- 初期読み込みトリガー ---
+    document.addEventListener('DOMContentLoaded', () => {
+        if (singleChartGoogleChartsLoaded && !singleChartInitialRendered) {
+            setupAndDrawSingleChart();
+        }
+    });
+  </script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        margin: 0; padding: 15px; background-color: #f4f6f8; color: #333;
+        display: flex; flex-direction: column; align-items: center;
+    }
+    #piechart-wrapper { /* jsgraph.htmlのグラフ全体を包むラッパー */
+        width: 100%;
+        max-width: 700px; /* グラフ表示エリアの最大幅 */
+        padding: 20px;
+        background-color: #fff;
         border-radius: 10px;
-        margin-top: 20px;
-        max-width: 80%;
-        height: auto;
-      }
-      input[type="submit"] {
-        font-size: 18px;
-        padding: 10px 20px;
-        margin: 10px 5px 0 0;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-      }
-      input[type="submit"] {
-        background-color: #006400;
-        color: #ffffff;
-	      border: solid 3px #006400;
-	      border-radius: 10px;
-      }
-      input[type="submit"]:hover{
-        background-color: #3cb371;
-        color: #ffffff;
-	      border: solid 3px #000000;
-	      border-radius: 10px;
-      }
-    </style>
+        box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+    }
+    #piechart-container { /* Google Chartの直接のコンテナ */
+        width: 100%;
+        aspect-ratio: 1.5 / 1; /* bookmarks.htmlと合わせるか、専用に調整 */
+        max-height: 450px;   /* こちらは単一表示なので少し大きめに */
+        margin: 0 auto;
+        overflow: hidden;   /* はみ出し防止 */
+        position: relative;
+    }
+    #piechart { width: 100%; height: 100%; } /* 描画要素 */
+
+    .controls {
+        width: 100%; max-width: 700px; margin-top: 20px;
+        text-align: center; padding: 15px;
+        background-color: #fff; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    .controls p { margin-top:0; margin-bottom: 15px; font-size: 0.9em; color: #555;}
+    .controls a, .controls strong {
+        margin: 0 4px; padding: 7px 12px; text-decoration: none; border-radius: 5px; font-size:0.85em;
+    }
+    .controls a {
+        border: 1px solid #007bff; background-color: #e7f3ff; color: #007bff;
+        transition: background-color 0.2s ease, color 0.2s ease;
+    }
+    .controls a:hover { background-color: #007bff; color:#fff; }
+    .controls strong { color: #333; font-weight: bold; background-color: #e9ecef; border: 1px solid #ced4da;}
+    .back-button {
+        background-color: #6c757d; color: #fff; border: none; /* ボタンデザイン変更 */
+        border-radius: 6px; padding: 10px 20px; text-decoration: none;
+        display: inline-block; cursor: pointer; margin-top:15px; font-size: 0.9em;
+        transition: background-color 0.2s ease;
+    }
+    .back-button:hover { background-color: #545b62; }
+  </style>
 </head>
 <body>
-    <h2>{{ subject_name }} の成績分布</h2>
-    <img src="data:image/png;base64,{{ plot_url }}" alt="成績分布円グラフ">
-    <br>
-    <form method="POST" action="/back">
-      <input type="submit" value="検索ページに戻る">
+  <div id="piechart-wrapper"> <div id="piechart-container">
+      <div id="piechart"></div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <p>年度切替: 
+    {% set years_list = ['2022', '2023', '2024', 'average'] %}
+    {% for y_item in years_list %}
+      {% if y_item != year %}
+        <a href="{{ url_for('show_graph', subject_id=subject_id, year=y_item) }}">{{ y_item }}</a>
+      {% else %}
+        <strong>{{ y_item }}</strong>
+      {% endif %}
+      {% if not loop.last %}&nbsp;|&nbsp;{% endif %} {# スペーサーを調整 #}
+    {% endfor %}
+    </p>
+    <form method="POST" action="{{ url_for('back') }}">
+        <input type="submit" value="検索ページに戻る" class="back-button">
     </form>
+  </div>
 </body>
 </html>
