@@ -163,5 +163,56 @@ def subject_grade_data(subject_id):
     print(f"[API INFO] Successfully prepared data for subject_id: {subject_id}, year: {year}. Data: {response_data}")
     return jsonify(response_data)
 
+@app.route('/summary')
+def summary_page():
+    # URLから並べ替えモードを取得 (例: /summary?sort=gpa)
+    # パラメータがなければ 'file' (ファイル順) をデフォルトとします
+    sort_mode = request.args.get('sort', 'file')
+
+    df = load_data("average")
+
+    if df.empty:
+        return render_template('summary.html', results=[], count=0, error="成績データを読み込めませんでした。")
+
+    # GPA計算に必要な人数カラムのリスト
+    member_columns = [
+        "A_plus_members", "A_members", "B_members", "C_members", "D_members", "full_members"
+    ]
+
+    # 必要な列が存在するか確認し、なければ0で埋めます
+    for col in member_columns:
+        if col not in df.columns:
+            print(f"[GPA WARNING] Column '{col}' not found. GPA calculation might be inaccurate.")
+            df[col] = 0
+        else:
+            df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+
+    # GPAを計算します
+    total_points = (
+        df["A_plus_members"] * 4.3 +
+        df["A_members"] * 4.0 +
+        df["B_members"] * 3.0 +
+        df["C_members"] * 2.0
+    )
+    df['gpa'] = total_points.div(df['full_members']).where(df['full_members'] > 0, 0)
+
+    # 並べ替えモードに応じてソートを実行します
+    if sort_mode == 'gpa':
+        # 성적순(成績順)の場合はGPAで降順（高い順）にソート
+        df = df.sort_values(by='gpa', ascending=False)
+    # sort_modeが'file'の場合、または指定がない場合は何もしない（ファイル順のまま）
+
+    # テンプレートに渡すデータを準備します
+    df = df.astype(object).where(pd.notnull(df), None)
+    results = df.to_dict(orient='records')
+    count = len(results)
+
+    # 現在の並べ替えモードをテンプレートに渡します
+    return render_template('summary.html',
+                        results=results,
+                        count=count,
+                        current_sort=sort_mode,
+                        error=None)
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="robots" content="none">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>成績分布一覧 (Average)</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f8f9fa;
+        }
+        h1 {
+            color: #333333;
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .container {
+            max-width: 1200px; 
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #ffffff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .alert {
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #f5c6cb;
+            border-radius: 5px;
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .nav-button {
+            background-color: #006400;
+            color: #ffffff;
+            border: solid 3px #006400;
+            border-radius: 10px;
+            padding: 8px 15px;
+            text-decoration: none;
+            display: inline-block;
+            cursor: pointer;
+            margin-top: 10px;
+            margin-right: 10px;
+        }
+        .nav-button:hover {
+            background-color: #ffffff;
+            color: #13522f;
+            border: solid 3px #696969;
+        }
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .table-container table {
+            min-width: 900px; 
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+            white-space: nowrap;
+        }
+        td.numeric, th.numeric {
+            text-align: right;
+        }
+        th {
+            background-color: #f2f2f2;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+        .bookmark-checkbox {
+            margin-right: 5px;
+        }
+        .navigation-links, .sort-options {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .sort-button.active {
+            background-color: #13522f;
+            border-color: #13522f;
+            color: #ffffff;
+            cursor: default;
+        }
+    </style>
+</head>
+<body>
+    
+    <h1>成績分布一覧 (Average)</h1>
+    <div class="container">
+        <div class="navigation-links">
+            <a href="{{ url_for('report') }}" class="nav-button">検索ページに戻る</a>
+            <a href="{{ url_for('bookmarks_page') }}" class="nav-button">ブックマーク一覧</a>
+        </div>
+
+        <p>全 <strong>{{ count }}</strong> 件のデータを表示しています。</p>
+
+        <div class="sort-options">
+            <span>並び順:</span>
+            <a href="{{ url_for('summary_page') }}" class="nav-button sort-button {% if current_sort == 'file' %}active{% endif %}">標準順</a>
+            <a href="{{ url_for('summary_page', sort='gpa') }}" class="nav-button sort-button {% if current_sort == 'gpa' %}active{% endif %}">成績順</a>
+        </div>
+
+        {% if error %}
+            <div class="alert"><strong>エラー:</strong> {{ error }}</div>
+        {% endif %}
+
+        {% if results %}
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>BM</th>
+                            <th>科目名</th>
+                            <th>科目番号</th>
+                            <th class="numeric">平均GPA</th>
+                            <th class="numeric">A+ (%)</th>
+                            <th class="numeric">A (%)</th>
+                            <th class="numeric">B (%)</th>
+                            <th class="numeric">C (%)</th>
+                            <th class="numeric">D (%)</th>
+                            <th>詳細グラフ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for subject in results %}
+                        <tr>
+                            <td>
+                                <input type="checkbox" class="bookmark-checkbox" 
+                                       data-subject-id="{{ subject['科⽬番号'] | string }}" 
+                                       data-subject-name="{{ subject['科⽬名称'] }}"
+                                       onchange="toggleBookmark(this)">
+                            </td>
+                            
+                            <td>{{ subject["科⽬名称"] }}</td>
+                            <td>{{ subject["科⽬番号"] }}</td>
+                            <td class="numeric">{{ subject.gpa | round(3) if subject.gpa is not none else 'N/A' }}</td>
+                            <td class="numeric">{{ (subject["A_plus_rate"] * 100) | round(2) if subject["A_plus_rate"] is not none else 'N/A' }}</td>
+                            <td class="numeric">{{ (subject["A_rate"] * 100) | round(2) if subject["A_rate"] is not none else 'N/A' }}</td>
+                            <td class="numeric">{{ (subject["B_rate"] * 100) | round(2) if subject["B_rate"] is not none else 'N/A' }}</td>
+                            <td class="numeric">{{ (subject["C_rate"] * 100) | round(2) if subject["C_rate"] is not none else 'N/A' }}</td>
+                            <td class="numeric">{{ (subject["D_rate"] * 100) | round(2) if subject["D_rate"] is not none else 'N/A' }}</td>
+                            
+                            <td>
+                                <a href="{{ url_for('show_graph', subject_id=subject['科⽬番号'] | string, year='average') }}">表示</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% elif not error %}
+            <div class="alert">データが見つかりませんでした。</div>
+        {% endif %}
+    </div>
+
+    <script>
+        const BOOKMARKS_KEY = 'subjectBookmarks';
+
+        function getBookmarks() {
+            const bookmarks = localStorage.getItem(BOOKMARKS_KEY);
+            return bookmarks ? JSON.parse(bookmarks) : [];
+        }
+
+        function saveBookmarks(bookmarks) {
+            localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(bookmarks));
+        }
+
+        function toggleBookmark(checkbox) {
+            const subjectId = String(checkbox.dataset.subjectId);
+            const subjectName = checkbox.dataset.subjectName;
+            let bookmarks = getBookmarks();
+
+            if (checkbox.checked) {
+                if (!bookmarks.find(bm => bm.id === subjectId)) {
+                    bookmarks.push({ id: subjectId, name: subjectName });
+                }
+            } else {
+                bookmarks = bookmarks.filter(bm => bm.id !== subjectId);
+            }
+            saveBookmarks(bookmarks);
+        }
+
+        function initializeBookmarkCheckboxes() {
+            const bookmarks = getBookmarks();
+            const checkboxes = document.querySelectorAll('.bookmark-checkbox');
+            checkboxes.forEach(checkbox => {
+                const subjectId = String(checkbox.dataset.subjectId);
+                if (bookmarks.find(bm => bm.id === subjectId)) {
+                    checkbox.checked = true;
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', initializeBookmarkCheckboxes);
+    </script>
+</body>
+</html>
