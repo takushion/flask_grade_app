@@ -1,8 +1,17 @@
 from flask import Flask, render_template, request, jsonify # jsonify をインポート
 import pandas as pd
 import traceback # スタックトレース出力用に追加
+import unicodedata # 正規化および全角文字やアルファベットに対応
 
 app = Flask(__name__)
+
+def normalize_keyword(word):
+    # 全角→半角（英数字、カタカナ、記号など）
+    word = unicodedata.normalize('NFKC', word)
+    # 小文字→大文字
+    word = word.upper()
+    # 前後の空白を削除
+    return word.strip()
 
 def load_data(year_sheet="average"):
     """指定されたシートからExcelファイルのデータを読み込みます。"""
@@ -27,7 +36,9 @@ def report():
 @app.route('/keyword', methods=['POST'])
 def keyword():
     search_type = request.form['search_type']
-    keyword_val = request.form['word'].strip()
+    # keyword_val = request.form['word'].strip()
+    keyword_val = normalize_keyword(request.form['word'])
+    print(f"Keyword: {keyword_val}")
     
     df_search = load_data("average") 
 
