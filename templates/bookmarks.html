@@ -233,6 +233,21 @@
         }
 
         // --- DOM要素生成と初期描画フロー ---
+        function removeBookmark(subjectId) {
+            let bookmarks = getBookmarks();
+            const originalLength = bookmarks.length;
+            bookmarks = bookmarks.filter(bm => bm.id !== String(subjectId));
+            
+            if (bookmarks.length < originalLength) {
+                saveBookmarks(bookmarks);
+                console.log(`ブックマーク削除: ${subjectId}`);
+                return true; // 削除成功
+            } else {
+                console.warn(`ブックマーク削除失敗: ${subjectId} が見つかりませんでした`);
+                return false; // 削除失敗
+            }
+        }
+
         function createBookmarkDOM(bookmark, index) {
             const itemDiv = document.createElement('div'); itemDiv.className = 'bookmark-item';
             const title = document.createElement('h3'); title.textContent = `📖 ${bookmark.name}`;
@@ -256,8 +271,34 @@
             const yearLabel = document.createElement('span'); yearLabel.textContent = '📅 表示年度:'; yearSelectorContainer.appendChild(yearLabel);
             yearSelectorContainer.appendChild(yearSelector); controlsDiv.appendChild(yearSelectorContainer);
             
-            const removeBtn = document.createElement('button'); removeBtn.className = 'remove-bookmark-btn'; removeBtn.textContent = '💔 ブックマーク解除';
-            removeBtn.onclick = () => { removeBookmark(bookmark.id); loadBookmarkedSubjectsAndDraw(); }; // 削除後再描画
+            const removeBtn = document.createElement('button'); 
+            removeBtn.className = 'remove-bookmark-btn'; 
+            removeBtn.textContent = '💔 ブックマーク解除';
+            removeBtn.onclick = () => { 
+                // 削除確認のダイアログを表示
+                if (confirm(`「${bookmark.name}」をブックマークから削除しますか？`)) {
+                    const deleteSuccess = removeBookmark(bookmark.id);
+                    if (deleteSuccess) {
+                        // 削除成功時の処理
+                        console.log(`ブックマーク削除完了: ${bookmark.name}`);
+                        
+                        // アクティブなチャートオブジェクトもクリーンアップ
+                        delete activeChartObjects[chartDivId];
+                        
+                        // 即座にDOM要素をフェードアウトして削除
+                        itemDiv.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                        itemDiv.style.opacity = '0';
+                        itemDiv.style.transform = 'translateY(-20px)';
+                        
+                        setTimeout(() => {
+                            // 完全に再読み込みして最新状態を表示
+                            loadBookmarkedSubjectsAndDraw();
+                        }, 300); // フェードアウト完了後に再読み込み
+                    } else {
+                        alert('ブックマークの削除に失敗しました。ページを再読み込みしてから再試行してください。');
+                    }
+                }
+            };
             controlsDiv.appendChild(removeBtn);
             itemDiv.appendChild(controlsDiv);
             return { itemDiv, chartDivId };
