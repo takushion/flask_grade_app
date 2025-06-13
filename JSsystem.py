@@ -45,7 +45,6 @@ def keyword():
     if df_search.empty:
         return render_template('result.html', results=[], count=0, error="成績データを読み込めませんでした。ファイルまたは「average」シートを確認してください。")
 
-    # 検索対象の列も文字列型であることを確認
     if search_type == "title":
         if "科⽬名称" not in df_search.columns:
             return render_template('result.html', results=[], count=0, error="「科⽬名称」列が見つかりません。")
