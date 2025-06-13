@@ -77,7 +77,27 @@
 	        border: solid 3px #000000;
 	        border-radius: 10px;
         }
+        .nav-button {
+    display: inline-block;
+    font-size: 18px;
+    padding: 10px 20px;
+    margin-top: 20px;
+    background-color: #006400;
+    color: #fff;
+    border: solid 3px #006400;
+    border-radius: 10px;
+    text-decoration: none;
+    text-align: center;
+    cursor: pointer;
+    transition: background 0.2s, border 0.2s;
+}
+.nav-button:hover {
+    background-color: #3cb371;
+    border: solid 3px #000;
+    color: #fff;
+}
     </style>
+
 </head>
 <body>
     <div class="container">
@@ -98,6 +118,7 @@
                 <input type="reset" value="クリア">
             </p>
         </form>
+        <a href="summary" class="nav-button">成績分布一覧</a>
     </div>
 </body>
 </html>
