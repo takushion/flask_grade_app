@@ -6,86 +6,124 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ブックマーク一覧</title>
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/chick-theme.css') }}">
     <style>
-        * { box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; /* モダンなフォントスタック */
-            margin: 0; padding: 8px; /* bodyのpaddingを少し減らす */
-            background-color: #f4f6f8; /* 背景色を少し変更 */
-            color: #333; line-height: 1.5; /* 行の高さを設定 */
-        }
-        .container {
-            width: 100%; max-width: 700px; /* 最大幅を少し調整 */
-            margin: 0 auto; padding: 8px;
-        }
-        h1 {
-            color: #2c3e50; text-align: center; font-size: 1.5em;
-            margin-top: 15px; margin-bottom: 25px; font-weight: 600;
-        }
-        .navigation-links { text-align: center; margin-bottom: 25px; }
-        .nav-button {
-            background-color: #007bff; color: #fff; border: none; /* ボタンデザイン変更 */
-            border-radius: 6px; padding: 10px 20px; text-decoration: none;
-            display: inline-block; cursor: pointer; margin: 5px; font-size: 0.9em;
-            transition: background-color 0.2s ease;
-        }
-        .nav-button:hover { background-color: #0056b3; }
-
-        #bookmarks-content {
-            display: flex; flex-direction: column; align-items: stretch;
-            width: 100%; gap: 20px; /* gapを少し調整 */
-        }
         .bookmark-item {
-            width: 100%; padding: 15px; border: 1px solid #e0e0e0; /* border色調整 */
-            border-radius: 8px; background-color: #ffffff;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.08); /* box-shadow調整 */
+            background: var(--chick-white);
+            border: 3px solid var(--chick-border);
+            border-radius: 20px;
+            padding: 25px;
+            margin: 20px 0;
+            box-shadow: 0 8px 32px var(--chick-shadow);
+            transition: transform 0.3s ease;
         }
+        
+        .bookmark-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 40px var(--chick-shadow);
+        }
+        
         .bookmark-item h3 {
-            margin-top: 0; margin-bottom: 12px; color: #34495e;
-            font-size: 1.1em; text-align: center; font-weight: 600;
-            word-break: break-word; /* 長い単語も改行 */
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: var(--chick-text);
+            font-size: 1.2rem;
+            text-align: center;
+            font-weight: 600;
         }
+        
         .chart-container {
             width: 100%;
-            aspect-ratio: 1.5 / 1; /* 横:縦 = 1.5:1 少し横長に。1/1 (正方形) も良い */
-            max-height: 320px;     /* 最大高さを調整 */
+            aspect-ratio: 1.5 / 1;
+            max-height: 320px;
             margin: 0 auto;
-            overflow: hidden;   /* はみ出し防止 */
+            overflow: hidden;
             position: relative;
-            background-color: #fdfdfd; /* グラフコンテナに薄い背景色（任意） */
+            background: #fffef7;
+            border-radius: 15px;
+            border: 2px solid var(--chick-yellow);
         }
+        
         .controls {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-top: 15px; flex-wrap: wrap; gap: 10px;
-            padding-top: 10px; border-top: 1px solid #eee; /* 区切り線 */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+            padding-top: 15px;
+            border-top: 3px solid var(--chick-yellow);
         }
-        .controls > div { display: flex; align-items: center; gap: 8px; font-size: 0.85em; }
+        
+        .controls > div {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+        }
+        
         .remove-bookmark-btn {
-            background-color: #e74c3c; color: white; border: none; padding: 7px 12px;
-            border-radius: 5px; cursor: pointer; font-size: 0.8em;
-            transition: background-color 0.2s ease;
+            background: linear-gradient(45deg, #ffcdd2, #f44336);
+            color: white;
+            border: 3px solid #f44336;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
         }
-        .remove-bookmark-btn:hover { background-color: #c0392b; }
+        
+        .remove-bookmark-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(244, 67, 54, 0.3);
+        }
+        
         .year-selector {
-            font-size: 0.85em; padding: 5px 7px; border-radius: 5px;
-            border: 1px solid #ccc; background-color: #fff;
+            font-size: 0.9rem;
+            padding: 8px 12px;
+            border-radius: 15px;
+            border: 3px solid var(--chick-border);
+            background: var(--chick-white);
+            color: var(--chick-text);
+            font-family: inherit;
         }
+        
         .loading-text, .error-text {
-            display: flex; align-items: center; justify-content: center;
-            height: 100px; /* ある程度の高さを確保 */
-            text-align: center; padding: 20px; color: #555; font-size: 0.9em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100px;
+            text-align: center;
+            padding: 20px;
+            color: var(--chick-text);
+            font-size: 1rem;
+            font-weight: 600;
         }
-        .error-text { color: #c0392b; }
+        
+        .error-text {
+            color: #c0392b;
+        }
+        
+        .empty-bookmarks {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--chick-text-light);
+            font-size: 1.1rem;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>ブックマーク一覧</h1>
-        <div class="navigation-links">
-            <a href="{{ url_for('report') }}" class="nav-button">検索ページに戻る</a>
+        
+        <div class="nav-links">
+            <a href="{{ url_for('report') }}">🔙 検索ページに戻る</a>
+            <a href="{{ url_for('summary_page') }}">📊 成績分布一覧</a>
         </div>
+        
         <div id="bookmarks-content">
-            <p class="loading-text">ブックマークを読み込み中...</p>
+            <div class="loading-text">ブックマークを読み込み中...</div>
         </div>
     </div>
 
@@ -155,11 +193,17 @@
                 ['B', subjectData.counts[2]], ['C', subjectData.counts[3]],
                 ['D', subjectData.counts[4]]
             ]);
-
             const containerWidth = chartElement.offsetWidth; // 現在のコンテナ幅を取得
             let dynamicOptions = {
                 title: `${subjectData.subject_name} (${subjectData.year})`,
                 pieHole: 0.1, width: '100%', height: '100%', fontName: 'Arial',
+                colors: [ // ← ここにcolorsプロパティを移動・追加します
+                    '#FF0000', // 真っ赤
+                    '#FFA500', // オレンジ
+                    '#FFD700', // 黄強めの黄緑濃い色
+                    '#008000', // 緑
+                    '#0000FF'  // 青
+                ],
                 legend: { position: 'bottom', alignment: 'center', textStyle: { fontSize: 10, color: '#444' } },
                 titleTextStyle: { fontSize: 12, bold: false, color: '#333' },
                 tooltip: { textStyle: { fontSize: 11 } },
@@ -191,19 +235,28 @@
         // --- DOM要素生成と初期描画フロー ---
         function createBookmarkDOM(bookmark, index) {
             const itemDiv = document.createElement('div'); itemDiv.className = 'bookmark-item';
-            const title = document.createElement('h3'); title.textContent = `${bookmark.name} (ID: ${bookmark.id})`; itemDiv.appendChild(title);
+            const title = document.createElement('h3'); title.textContent = `📖 ${bookmark.name}`;
+            const subtitle = document.createElement('div');
+            subtitle.style.textAlign = 'center';
+            subtitle.style.fontSize = '0.9rem';
+            subtitle.style.color = 'var(--chick-text-light)';
+            subtitle.style.marginBottom = '15px';
+            subtitle.textContent = `🔢 科目番号: ${bookmark.id}`;
+            itemDiv.appendChild(title);
+            itemDiv.appendChild(subtitle);
+            
             const chartDivId = `chart_div_${bookmark.id.replace(/[^a-zA-Z0-9_]/g, "")}_${index}`;
             const chartDiv = document.createElement('div'); chartDiv.id = chartDivId; chartDiv.className = 'chart-container';
-            chartDiv.innerHTML = '<p class="loading-text">グラフ領域準備中...</p>'; itemDiv.appendChild(chartDiv);
+            chartDiv.innerHTML = '<p class="loading-text">🐣 グラフを準備中...</p>'; itemDiv.appendChild(chartDiv);
             
             const controlsDiv = document.createElement('div'); controlsDiv.className = 'controls';
             const yearToDisplay = activeChartObjects[chartDivId]?.subjectData?.year || bookmark.currentYear || 'average';
             const yearSelector = createYearSelectorElement(bookmark.id, yearToDisplay, chartDivId);
             const yearSelectorContainer = document.createElement('div');
-            const yearLabel = document.createElement('span'); yearLabel.textContent = '表示年度:'; yearSelectorContainer.appendChild(yearLabel);
+            const yearLabel = document.createElement('span'); yearLabel.textContent = '📅 表示年度:'; yearSelectorContainer.appendChild(yearLabel);
             yearSelectorContainer.appendChild(yearSelector); controlsDiv.appendChild(yearSelectorContainer);
             
-            const removeBtn = document.createElement('button'); removeBtn.className = 'remove-bookmark-btn'; removeBtn.textContent = 'ブックマーク解除';
+            const removeBtn = document.createElement('button'); removeBtn.className = 'remove-bookmark-btn'; removeBtn.textContent = '💔 ブックマーク解除';
             removeBtn.onclick = () => { removeBookmark(bookmark.id); loadBookmarkedSubjectsAndDraw(); }; // 削除後再描画
             controlsDiv.appendChild(removeBtn);
             itemDiv.appendChild(controlsDiv);
@@ -220,7 +273,16 @@
             activeChartObjects = {};   // キャッシュもクリア
 
             if (bookmarks.length === 0) {
-                contentDiv.innerHTML = '<p class="loading-text">ブックマークされている科目はまだありません。</p>';
+                contentDiv.innerHTML = `
+                    <div class="empty-bookmarks">
+                        <div class="chick-decoration">🐣💔🐥</div>
+                        <h3>まだブックマークされている科目はありません</h3>
+                        <p>🔍 検索ページで科目を探して、⭐をクリックしてブックマークしてみましょう！</p>
+                        <div class="nav-links" style="margin-top: 20px;">
+                            <a href="${window.location.origin}/">🔍 検索ページへ</a>
+                        </div>
+                    </div>
+                `;
                 initialChartsRendered = false; // チャートがないのでリセット
                 return;
             }

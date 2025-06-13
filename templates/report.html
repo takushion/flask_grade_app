@@ -5,50 +5,13 @@
     <meta name="descriptin" content="知識情報・図書館学類の成績分布を科目ごとに円グラフにして見やすくしたものです。2024年度から2022年度の成績分布を科目名あるいは科目番号から調べることができます。">
     <meta name="robots" content="nofollow">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>検索</title>
+    <title>成績検索</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/chick-theme.css') }}">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: #f8f9fa;
-        }
-        .container {
+        /* ページ固有のスタイル */
+        .search-form {
             max-width: 600px;
             margin: 0 auto;
-            padding: 20px;
-            background-color: #ffffff;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            border-radius: 10px;
-        }
-        h2 {
-            color: #333333;
-            font-size: 24px;
-            margin-bottom: 20px;
-        }
-        p {
-            font-size: 18px;
-            color: #555555;
-        }
-        input[type="radio"] {
-            margin-right: 10px;
-        }
-        label {
-            font-size: 18px;
-            color: #333333;
-        }
-        input[type="text"] {
-            font-size: 18px;
-            padding: 5px;
-            margin-top: 10px;
-            width: calc(100% - 12px);
-            box-sizing: border-box;
-            border: 1px solid #cccccc;
-            border-radius: 5px;
-        }
-        input[type="submit"], input[type="reset"] {
-            font-size: 18px;
-            padding: 10px 20px;
-            margin: 10px 5px 0 0;
             border: none;
             border-radius: 5px;
             cursor: pointer;
@@ -83,42 +46,50 @@
     padding: 10px 20px;
     margin-top: 20px;
     background-color: #006400;
-    color: #fff;
-    border: solid 3px #006400;
-    border-radius: 10px;
-    text-decoration: none;
-    text-align: center;
-    cursor: pointer;
-    transition: background 0.2s, border 0.2s;
-}
-.nav-button:hover {
-    background-color: #3cb371;
-    border: solid 3px #000;
-    color: #fff;
-}
+    color: #fff;        }
+        
+        .radio-group {
+            margin: 20px 0;
+        }
+        
+        .radio-group label {
+            margin-left: 8px;
+            margin-right: 20px;
+        }
     </style>
-
 </head>
 <body>
     <div class="container">
-        <h2>検索</h2>
-        <p>科目名または科目番号を選択し、対応する情報を検索窓に入力してください。そして最後に「送信」ボタンをクリックしてください。</p>
-        <form method="POST" action="keyword">
+        <h1>成績検索システム</h1>
+        
+        <form method="POST" action="keyword" class="search-form">
+            <h2>検索方法を選んでね</h2>
+            <p>科目名または科目番号を選択し、対応する情報を検索窓に入力してください。そして最後に「送信」ボタンをクリックしてください。</p>
+            
+            <div class="radio-group">
+                <p>
+                    <input type="radio" id="search_title" name="search_type" value="title" checked>
+                    <label for="search_title">📝 科目名で検索</label><br>
+                    <input type="radio" id="search_number" name="search_type" value="id">
+                    <label for="search_number">🔢 科目番号で検索</label>
+                </p>
+            </div>
+            
             <p>
-                <input type="radio" id="search_title" name="search_type" value="title" checked>
-                <label for="search_title">科目名で検索</label><br>
-                <input type="radio" id="search_number" name="search_type" value="number">
-                <label for="search_number">科目番号で検索</label>
+                <label for="keyword">キーワード:</label>
+                <input type="text" id="keyword" name="word" placeholder="科目名または科目番号を入力してね" size="20">
             </p>
+            
             <p>
-                キーワード: <input type="text" name="word" placeholder="科目名または科目番号" size="20"><br>
-            </p>
-            <p>
-                <input type="submit" value="送信">
-                <input type="reset" value="クリア">
+                <input type="submit" value="🔍 検索する">
+                <input type="reset" value="🧹 クリア">
             </p>
         </form>
-        <a href="summary" class="nav-button">成績分布一覧</a>
+        
+        <div class="nav-links">
+            <a href="summary">📊 成績分布一覧を見る</a>
+            <a href="bookmarks">⭐ ブックマーク</a>
+        </div>
     </div>
 </body>
 </html>
