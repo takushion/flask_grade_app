@@ -17,6 +17,8 @@
         }
         
         .sort-btn.active {
+            text-align: center;
+            font-family: 'Arial', sans-serif;
             background: linear-gradient(45deg, var(--chick-yellow-dark), var(--chick-green-bright));
             transform: translateY(-2px);
             box-shadow: 0 8px 25px var(--chick-shadow);
@@ -89,6 +91,10 @@
             <a href="{{ url_for('bookmarks_page') }}">🔖 ブックマーク一覧</a>
         </div>
 
+        <div class="description">
+        <p>複数の科目を一度に比較したいときは、気になる科目をブックマークに追加し、一覧からまとめて確認できます。<br>ブックマークを削除しない限り、検索ページにもどってもブックマークは保存されます。</p>
+        </div>
+
         <div class="result-count">
             📚 全 <strong>{{ count }}</strong> 件のデータを表示しています
         </div>
@@ -109,7 +115,7 @@
                     <table>
                         <thead>
                             <tr>
-                                <th>🔖</th>
+                                <th>🔖ブックマーク</th>
                                 <th>📖 科目名</th>
                                 <th>🔢 科目番号</th>
                                 <th class="numeric">📊 平均GPA</th>
