@@ -126,7 +126,9 @@
         <p>
             表示科目の年度を変更したあと、<strong>グラフを更新中</strong>という表示が出たら、ページの再読み込みをお願いします。
         </p>
+
         </div>
+        
         <div id="bookmarks-content">
             <div class="loading-text">ブックマークを読み込み中...</div>
         </div>
@@ -290,6 +292,7 @@
 
             controlsDiv.appendChild(yearSelectorContainer);
 
+
             const removeBtn = document.createElement('button'); 
             removeBtn.className = 'remove-bookmark-btn'; 
             removeBtn.textContent = '💔 ブックマーク解除';
@@ -339,7 +342,9 @@
                         <h3>まだブックマークされている科目はありません</h3>
                         <p>🔍 検索ページで科目を探して、⭐をクリックしてブックマークしてみましょう！</p>
                         <div class="nav-links" style="margin-top: 20px;">
+
                             <a href="${window.location.origin}/report.html">🔍 検索ページへ</a>
+
                         </div>
                     </div>
                 `;

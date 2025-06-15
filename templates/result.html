@@ -37,6 +37,8 @@
             color: var(--chick-text-light);
             font-size: 0.9rem;
             margin-top: 5px;
+
+        }
             margin-right: 10px; /* ボタン間のスペース */
         }
         input[type="submit"]:hover, .nav-button:hover {
@@ -69,6 +71,7 @@
         <div class="nav-links">
             <a href="{{ url_for('report') }}">🔙 検索ページに戻る</a>
             <a href="{{ url_for('bookmarks_page') }}">⭐ ブックマーク一覧</a>
+
         </div>
         <div class="description">
         <p>複数の科目を一度に比較したいときは、気になる科目をブックマークに追加し、一覧からまとめて確認できます。<br>ブックマークを削除しない限り、検索ページにもどってもブックマークは保存されます。</p>
@@ -125,7 +128,6 @@
                 条件を変えて再検索してみてください。以下の場合、成績分布が存在しない可能性があります：
                 <ul style="text-align: left; margin: 10px 0;">
                     <li>🎯 科目名あるいは科目番号の選択を誤っている</li>
-                    <li>📅 指定した年度に開講されていない</li>
                     <li>📋 成績分布が存在しない（例：知的探求の世界、インターンシップなど）</li>
                 </ul>
             </div>
