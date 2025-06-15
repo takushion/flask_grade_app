@@ -5,50 +5,40 @@
     <meta name="robots" content="none">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>検索結果</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/chick-theme.css') }}">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: #f8f9fa;
-        }
-        h1 {
-            color: #333333;
-            font-size: 24px;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
+        .result-item {
+            background: var(--chick-white);
+            border: 3px solid var(--chick-border);
+            border-radius: 15px;
             padding: 20px;
-            background-color: #ffffff;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin: 15px 0;
+            box-shadow: 0 4px 15px var(--chick-shadow);
+            transition: transform 0.3s ease;
         }
-        .result {
-            padding: 10px;
-            margin-bottom: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            background-color: #f9f9f9;
+        
+        .result-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px var(--chick-shadow);
         }
-        .alert {
-            padding: 10px;
-            margin-bottom: 10px;
-            border: 1px solid #f5c6cb;
-            border-radius: 5px;
-            background-color: #f8d7da;
-            color: #721c24;
+        
+        .subject-link {
+            color: var(--chick-text);
+            font-weight: 600;
+            text-decoration: none;
+            font-size: 1.1rem;
         }
-        input[type="submit"], .nav-button { /* ナビゲーションボタンスタイル */
-            background-color: #006400;
-            color: #ffffff;
-            border: solid 3px #006400;
-            border-radius: 10px;
-            padding: 8px 15px;
-            text-decoration: none; /* ボタンとしてスタイル設定された<a>用 */
-            display: inline-block; /* ボタンとしてスタイル設定された<a>用 */
-            cursor: pointer;
-            margin-top: 10px;
+        
+        .subject-link:hover {
+            color: var(--chick-yellow-dark);
+        }
+        
+        .subject-id {
+            color: var(--chick-text-light);
+            font-size: 0.9rem;
+            margin-top: 5px;
+
+        }
             margin-right: 10px; /* ボタン間のスペース */
         }
         input[type="submit"]:hover, .nav-button:hover {
@@ -71,65 +61,78 @@
         }
         .bookmark-checkbox {
             margin-right: 5px;
-        }
-        .navigation-links { /* ナビゲーションボタン用コンテナ */
-            margin-bottom: 20px;
-            text-align: center; /* ナビゲーションボタンを中央揃え */
-        }
-    </style>
+        }    </style>
 </head>
 <body>
-    
-    <h1>検索結果</h1>
     <div class="container">
-        <div class="navigation-links">
-            <a href="{{ url_for('report') }}" class="nav-button">検索ページに戻る</a>
-            <a href="{{ url_for('bookmarks_page') }}" class="nav-button">ブックマーク一覧</a>
+        <h1>🔍 検索結果</h1>
+        <div class="chick-decoration">🐣📚🐥</div>
+        
+        <div class="nav-links">
+            <a href="{{ url_for('report') }}">🔙 検索ページに戻る</a>
+            <a href="{{ url_for('bookmarks_page') }}">⭐ ブックマーク一覧</a>
+
+        </div>
+        <div class="description">
+        <p>複数の科目を一度に比較したいときは、気になる科目をブックマークに追加し、一覧からまとめて確認できます。<br>ブックマークを削除しない限り、検索ページにもどってもブックマークは保存されます。</p>
+        </div>
+        <div class="result-count">
+            🎯 検索結果: <strong>{{ count }}</strong> 件見つかりました！
         </div>
 
-        <p>検索数は <strong>{{ count }}</strong> 件です</p>
-
         {% if error %}
-            <div class="alert"><strong>エラー:</strong> {{ error }}</div>
+            <div class="error">
+                <strong>🚨 エラー:</strong> {{ error }}
+            </div>
         {% endif %}
 
         {% if results %}
-            <table border="1">
-                <tr>
-                    <th>ブックマーク</th>
-                    <th>科目番号</th>
-                    <th>科目名</th>
-                    <th>年度別グラフ</th>
-                </tr>
-                {% for result in results %}
-                <tr>
-                    <td>
-                        <input type="checkbox" class="bookmark-checkbox" 
-                               data-subject-id="{{ result['科⽬番号'] | string }}" 
-                               data-subject-name="{{ result['科⽬名称'] }}"
-                               onchange="toggleBookmark(this)">
-                    </td>
-                    <td>{{ result["科⽬番号"] }}</td>
-                    <td>{{ result["科⽬名称"] }}</td>
-                    <td>
-                        <a href="{{ url_for('show_graph', subject_id=result['科⽬番号'] | string, year='2024') }}">2024</a>, 
-                        <a href="{{ url_for('show_graph', subject_id=result['科⽬番号'] | string, year='2023') }}">2023</a>, 
-                        <a href="{{ url_for('show_graph', subject_id=result['科⽬番号'] | string, year='2022') }}">2022</a>, 
-                        <a href="{{ url_for('show_graph', subject_id=result['科⽬番号'] | string, year='average') }}">average</a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </table>
-        {% elif not error %} <div class="alert"><strong>見つかりませんでした</strong></div>
-            <p>条件を変えて再検索してみてください。<br>以下に当てはまるときには成績分布が存在しない場合があります。
-                <ul>
-                    <li>科目名あるいは科目番号の選択を誤っている</li>
-                    <li>指定した年度に開講されていない (この検索は主に'average'シートを参照します)</li>
-                    <li>成績分布が存在しない（例：知的探求の世界、インターンシップなど）</li>
+            {% for result in results %}
+                <div class="result-item">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 200px;">
+                            <div class="subject-link">
+                                📖 {{ result["科⽬名称"] }}
+                            </div>
+                            <div class="subject-id">
+                                🔢 科目番号: {{ result["科⽬番号"] }}
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                            <label style="margin: 0;">
+                                <input type="checkbox" class="bookmark-checkbox" 
+                                       data-subject-id="{{ result['科⽬番号'] | string }}" 
+                                       data-subject-name="{{ result['科⽬名称'] }}"
+                                       onchange="toggleBookmark(this)">
+                                ⭐ ブックマーク
+                            </label>
+                        </div>
+                    </div>
+                    <div style="margin-top: 15px;">
+                        <strong>📊 年度別グラフ:</strong>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
+                            <a href="{{ url_for('show_graph', subject_id=result['科⽬番号'] | string, year='2024') }}" class="btn" style="font-size: 14px; padding: 8px 15px;">📈 2024年度</a>
+                            <a href="{{ url_for('show_graph', subject_id=result['科⽬番号'] | string, year='2023') }}" class="btn" style="font-size: 14px; padding: 8px 15px;">📈 2023年度</a>
+                            <a href="{{ url_for('show_graph', subject_id=result['科⽬番号'] | string, year='2022') }}" class="btn" style="font-size: 14px; padding: 8px 15px;">📈 2022年度</a>
+                            <a href="{{ url_for('show_graph', subject_id=result['科⽬番号'] | string, year='average') }}" class="btn" style="font-size: 14px; padding: 8px 15px;">📊 平均</a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% elif not error %}
+            <div class="error">
+                <strong>🔍 見つかりませんでした</strong>
+            </div>
+            <div class="info">
+                <strong>💡 検索のヒント:</strong><br>
+                条件を変えて再検索してみてください。以下の場合、成績分布が存在しない可能性があります：
+                <ul style="text-align: left; margin: 10px 0;">
+                    <li>🎯 科目名あるいは科目番号の選択を誤っている</li>
+                    <li>📋 成績分布が存在しない（例：知的探求の世界、インターンシップなど）</li>
                 </ul>
-            </p>
+            </div>
         {% endif %}
-        </div>
+    </div>
 
     <script>
         const BOOKMARKS_KEY = 'subjectBookmarks';
