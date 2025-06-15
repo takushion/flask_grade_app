@@ -39,6 +39,15 @@ body {
     padding: 0 15px;
 }
 
+/* 説明 */
+.description {
+    background: var(--chick-white);
+    border-radius: 20px;
+    border: 3px solid var(--chick-border);
+    text-align: center;
+    padding: 15px;
+    border-radius: 10px;
+}
 /* ヘッダーとタイトル */
 h1,
 h2,

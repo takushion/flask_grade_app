@@ -117,9 +117,16 @@
     <div class="container">
         <h1>ブックマーク一覧</h1>
         
+        
         <div class="nav-links">
             <a href="{{ url_for('report') }}">🔙 検索ページに戻る</a>
             <a href="{{ url_for('summary_page') }}">📊 成績分布一覧</a>
+        </div>
+        <div class="description">
+        <p>
+            表示科目の年度を変更したあと、<strong>グラフを更新中</strong>という表示が出たら、ページの再読み込みをお願いします。
+        </p>
+
         </div>
         
         <div id="bookmarks-content">
@@ -268,9 +275,24 @@
             const yearToDisplay = activeChartObjects[chartDivId]?.subjectData?.year || bookmark.currentYear || 'average';
             const yearSelector = createYearSelectorElement(bookmark.id, yearToDisplay, chartDivId);
             const yearSelectorContainer = document.createElement('div');
-            const yearLabel = document.createElement('span'); yearLabel.textContent = '📅 表示年度:'; yearSelectorContainer.appendChild(yearLabel);
-            yearSelectorContainer.appendChild(yearSelector); controlsDiv.appendChild(yearSelectorContainer);
-            
+            yearSelectorContainer.style.display = 'flex';
+            yearSelectorContainer.style.flexWrap = 'nowrap'; // 改行させない
+            yearSelectorContainer.style.alignItems = 'center';
+            yearSelectorContainer.style.gap = '8px'; // ラベルとセレクトボックスの間隔
+
+            const yearLabel = document.createElement('span');
+            yearLabel.textContent = '📅 表示年度:';
+            yearLabel.style.whiteSpace = 'nowrap'; // 改行防止
+            yearSelectorContainer.appendChild(yearLabel);
+
+            // yearSelector（<select>）に幅制限を追加
+            yearSelector.style.flexShrink = '0'; // 縮まないように
+            yearSelector.style.maxWidth = '200px'; // 適切な最大幅
+            yearSelectorContainer.appendChild(yearSelector);
+
+            controlsDiv.appendChild(yearSelectorContainer);
+
+
             const removeBtn = document.createElement('button'); 
             removeBtn.className = 'remove-bookmark-btn'; 
             removeBtn.textContent = '💔 ブックマーク解除';
@@ -320,7 +342,9 @@
                         <h3>まだブックマークされている科目はありません</h3>
                         <p>🔍 検索ページで科目を探して、⭐をクリックしてブックマークしてみましょう！</p>
                         <div class="nav-links" style="margin-top: 20px;">
-                            <a href="${window.location.origin}/">🔍 検索ページへ</a>
+
+                            <a href="${window.location.origin}/report.html">🔍 検索ページへ</a>
+
                         </div>
                     </div>
                 `;

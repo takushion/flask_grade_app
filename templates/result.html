@@ -37,6 +37,7 @@
             color: var(--chick-text-light);
             font-size: 0.9rem;
             margin-top: 5px;
+
         }
             margin-right: 10px; /* ボタン間のスペース */
         }
@@ -70,8 +71,11 @@
         <div class="nav-links">
             <a href="{{ url_for('report') }}">🔙 検索ページに戻る</a>
             <a href="{{ url_for('bookmarks_page') }}">⭐ ブックマーク一覧</a>
-        </div>
 
+        </div>
+        <div class="description">
+        <p>複数の科目を一度に比較したいときは、気になる科目をブックマークに追加し、一覧からまとめて確認できます。<br>ブックマークを削除しない限り、検索ページにもどってもブックマークは保存されます。</p>
+        </div>
         <div class="result-count">
             🎯 検索結果: <strong>{{ count }}</strong> 件見つかりました！
         </div>
