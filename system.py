@@ -47,13 +47,21 @@ def show_graph(subject_id):
     row = match.iloc[0]
     grades = ["A_plus_members", "A_members", "B_members", "C_members", "D_members"]
     labels = ["A+", "A", "B", "C", "D"]
-    counts = [row[g] for g in grades]
-
+    counts = [row[g] for g in grades]    # ひよこテーマの可愛い色設定 🐥
+    chick_colors = ['#ffeb3b', '#fff176', '#c8e6c9', '#a5d6a7', '#ffcc80']
+    
     # グラフを画像として返す
-    fig, ax = plt.subplots(figsize=(6, 6))
-    ax.pie(counts, labels=labels, autopct='%1.1f%%', startangle=90, counterclock=False)
-    ax.set_title(f"{row['科⽬名称']} の成績分布")
+    fig, ax = plt.subplots(figsize=(6, 6), facecolor='#fffde7')  # 背景もひよこ色
+    wedges, texts, autotexts = ax.pie(counts, labels=labels, autopct='%1.1f%%', 
+                                     startangle=90, counterclock=False, colors=chick_colors,
+                                     textprops={'fontsize': 12, 'color': '#5d4037'})
+    ax.set_title(f"🐥 {row['科⽬名称']} の成績分布", fontsize=14, color='#5d4037', pad=20)
     ax.axis('equal')
+    
+    # オートテキスト（パーセンテージ）の色を濃くして見やすく
+    for autotext in autotexts:
+        autotext.set_color('#5d4037')
+        autotext.set_fontweight('bold')
 
     # グラフをBase64に変換
     img = io.BytesIO()
