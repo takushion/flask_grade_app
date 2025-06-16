@@ -2,16 +2,38 @@ from flask import Flask, render_template, request, jsonify # jsonify をイン�
 import pandas as pd
 import traceback # スタックトレース出力用に追加
 import unicodedata # 正規化および全角文字やアルファベットに対応
+import re
 
 app = Flask(__name__)
 
+# JSsystem.py の normalize_keyword 関数を全文字対応に改良
 def normalize_keyword(word):
-    # 全角→半角（英数字、カタカナ、記号など）
+    if not word:
+        return ""
+    
+    # 文字列に変換
+    word = str(word)
+    
+    # NFKC正規化（互換文字を標準文字に変換）
+    # これにより、全角英数字→半角、互換漢字→標準漢字、合成文字→分解文字など
+    # すべての互換文字が標準形に統一されます
     word = unicodedata.normalize('NFKC', word)
-    # 小文字→大文字
+    
+    word = unicodedata.normalize('NFC', word)
+    
+    # 制御文字や不可視文字を削除
+    word = ''.join(char for char in word if unicodedata.category(char)[0] != 'C')
+    
+    # 大文字変換（英数字用）
     word = word.upper()
-    # 前後の空白を削除
-    return word.strip()
+    
+    # 前後の空白削除と連続空白の正規化
+    word = re.sub(r'\s+', ' ', word.strip())
+    
+    return word
+
+def normalize_all_text(text):
+    return normalize_keyword(str(text) if text is not None else "")
 
 def load_data(year_sheet="average"):
     """指定されたシートからExcelファイルのデータを読み込みます。"""
@@ -36,9 +58,11 @@ def report():
 @app.route('/keyword', methods=['POST'])
 def keyword():
     search_type = request.form['search_type']
-    # keyword_val = request.form['word'].strip()
-    keyword_val = normalize_keyword(request.form['word'])
-    print(f"Keyword: {keyword_val}")
+    keyword_val = request.form['word'].strip()
+    
+    # 検索語を完全正規化
+    normalized_keyword = normalize_keyword(keyword_val)
+    
     
     df_search = load_data("average") 
 
@@ -48,13 +72,41 @@ def keyword():
     if search_type == "title":
         if "科⽬名称" not in df_search.columns:
             return render_template('result.html', results=[], count=0, error="「科⽬名称」列が見つかりません。")
-        matches = df_search[df_search["科⽬名称"].astype(str).str.contains(keyword_val, na=False)]
+        
+        # データベース内の全てのapplyで科目名の値全てを正規化
+        df_search['normalized_subject'] = df_search["科⽬名称"].apply(normalize_all_text)
+        
+        # 正規化済みデータで部分一致検索
+        matches = df_search[
+            df_search['normalized_subject'].str.contains(
+                normalized_keyword, 
+                case=False,  # 大文字小文字を区別しない
+                na=False, 
+                regex=False  # 正規表現を無効化
+            )
+        ]
+        
     else: # search_type == "id" (科目番号)
         if "科⽬番号" not in df_search.columns:
             return render_template('result.html', results=[], count=0, error="「科⽬番号」列が見つかりません。")
-        # load_dataで科目番号は文字列に変換済みのはず
-        matches = df_search[df_search["科⽬番号"].str.contains(keyword_val, na=False)]
+        
+        # 科目番号も全て正規化して検索
+        df_search['normalized_id'] = df_search["科⽬番号"].astype(str).apply(normalize_all_text)
+        
+        matches = df_search[
+            df_search['normalized_id'].str.contains(
+                normalized_keyword, 
+                case=False, 
+                na=False, 
+                regex=False
+            )
+        ]
 
+    # 正規化用の一時列を削除（結果には含めない）
+    if 'normalized_subject' in matches.columns:
+        matches = matches.drop('normalized_subject', axis=1)
+    if 'normalized_id' in matches.columns:
+        matches = matches.drop('normalized_id', axis=1)
 
     results = matches.to_dict(orient='records')
     count = len(results)
