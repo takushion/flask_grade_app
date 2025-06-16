@@ -1,0 +1,417 @@
+/* 🐥 ひよこテーマ - 可愛いデザイン 🐥 */
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700&display=swap');
+
+:root {
+    /* ひよこテーマカラー */
+    --chick-yellow: #fff3a0;
+    --chick-yellow-bright: #ffeb3b;
+    --chick-yellow-dark: #ffc107;
+    --chick-green: #c8e6c9;
+    --chick-green-bright: #81c784;
+    --chick-orange: #ffcc80;
+    --chick-white: #fffde7;
+    --chick-shadow: rgba(255, 235, 59, 0.3);
+    --chick-border: #fff176;
+    --chick-text: #5d4037;
+    --chick-text-light: #8d6e63;
+    --chick-success: #4caf50;
+    --chick-hover: #f8f8f8;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Nunito', 'Helvetica Neue', Arial, sans-serif;
+    background: linear-gradient(135deg, var(--chick-yellow) 0%, var(--chick-green) 100%);
+    color: var(--chick-text);
+    margin: 0;
+    padding: 20px;
+    min-height: 100vh;
+    line-height: 1.6;
+}
+
+/* コンテナ */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 15px;
+}
+
+/* 説明 */
+.description {
+    background: var(--chick-white);
+    border-radius: 20px;
+    border: 3px solid var(--chick-border);
+    text-align: center;
+    padding: 15px;
+    border-radius: 10px;
+}
+/* ヘッダーとタイトル */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    color: var(--chick-text);
+    font-weight: 700;
+    margin-bottom: 20px;
+    text-align: center;
+    position: relative;
+}
+
+h1 {
+    font-size: 2.5rem;
+    margin-bottom: 30px;
+    text-shadow: 2px 2px 4px var(--chick-shadow);
+}
+
+h2 {
+    font-size: 2rem;
+    margin-top: 30px;
+}
+
+h2:before {
+    content: "🐥 ";
+    font-size: 1.2em;
+}
+
+/* カード風コンテナ */
+.card {
+    background: var(--chick-white);
+    border-radius: 20px;
+    box-shadow: 0 8px 32px var(--chick-shadow);
+    margin: 20px 0;
+    padding: 30px;
+    border: 3px solid var(--chick-border);
+    position: relative;
+    overflow: hidden;
+}
+
+.card:before {
+    content: "";
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 100px;
+    height: 100px;
+    background: radial-gradient(circle, var(--chick-yellow-bright) 0%, transparent 70%);
+    opacity: 0.1;
+    border-radius: 50%;
+}
+
+/* フォーム要素 */
+form {
+    background: var(--chick-white);
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 8px 32px var(--chick-shadow);
+    border: 3px solid var(--chick-border);
+    margin: 20px 0;
+}
+
+input[type="text"],
+input[type="search"],
+select,
+textarea {
+    width: 100%;
+    padding: 15px 20px;
+    border: 3px solid var(--chick-border);
+    border-radius: 25px;
+    font-size: 16px;
+    font-family: inherit;
+    background: var(--chick-white);
+    color: var(--chick-text);
+    transition: all 0.3s ease;
+    margin: 10px 0;
+}
+
+input[type="text"]:focus,
+input[type="search"]:focus,
+select:focus,
+textarea:focus {
+    outline: none;
+    border-color: var(--chick-yellow-bright);
+    box-shadow: 0 0 0 3px var(--chick-shadow);
+    background: #fffef7;
+}
+
+/* ボタン */
+button,
+input[type="submit"],
+input[type="button"],
+.btn {
+    background: linear-gradient(45deg, var(--chick-yellow-bright), var(--chick-green-bright));
+    color: var(--chick-text);
+    border: 3px solid var(--chick-border);
+    padding: 15px 30px;
+    border-radius: 25px;
+    font-size: 16px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+    margin: 10px 5px;
+    position: relative;
+    overflow: hidden;
+}
+
+button:hover,
+input[type="submit"]:hover,
+input[type="button"]:hover,
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px var(--chick-shadow);
+    background: linear-gradient(45deg, var(--chick-yellow-dark), var(--chick-success));
+}
+
+button:active,
+input[type="submit"]:active,
+input[type="button"]:active,
+.btn:active {
+    transform: translateY(0);
+    box-shadow: 0 4px 15px var(--chick-shadow);
+}
+
+/* 戻るボタン専用 */
+.back-btn {
+    background: linear-gradient(45deg, var(--chick-green), var(--chick-yellow));
+    border-color: var(--chick-green-bright);
+}
+
+.back-btn:hover {
+    background: linear-gradient(45deg, var(--chick-green-bright), var(--chick-yellow-bright));
+}
+
+/* テーブル */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--chick-white);
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px var(--chick-shadow);
+    margin: 20px 0;
+    border: 3px solid var(--chick-border);
+}
+
+th,
+td {
+    padding: 15px 12px;
+    text-align: left;
+    border-bottom: 2px solid var(--chick-yellow);
+}
+
+th {
+    background: linear-gradient(45deg, var(--chick-yellow), var(--chick-green));
+    color: var(--chick-text);
+    font-weight: 600;
+    text-align: center;
+}
+
+tr:nth-child(even) {
+    background: #fefef9;
+}
+
+tr:hover {
+    background: var(--chick-hover);
+    transition: background-color 0.3s ease;
+}
+
+/* リンク */
+a {
+    color: var(--chick-text);
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.3s ease;
+}
+
+a:hover {
+    color: var(--chick-yellow-dark);
+    text-decoration: underline;
+}
+
+/* 画像 */
+img {
+    border: 3px solid var(--chick-border);
+    border-radius: 15px;
+    margin: 20px 0;
+    max-width: 100%;
+    height: auto;
+    box-shadow: 0 8px 32px var(--chick-shadow);
+}
+
+/* エラーメッセージ */
+.error {
+    background: linear-gradient(45deg, #ffcdd2, #ffeb3b);
+    border: 3px solid #f44336;
+    color: #d32f2f;
+    padding: 15px 20px;
+    border-radius: 15px;
+    margin: 20px 0;
+    font-weight: 600;
+}
+
+/* 成功メッセージ */
+.success {
+    background: linear-gradient(45deg, var(--chick-green), var(--chick-yellow));
+    border: 3px solid var(--chick-success);
+    color: var(--chick-text);
+    padding: 15px 20px;
+    border-radius: 15px;
+    margin: 20px 0;
+    font-weight: 600;
+}
+
+/* 情報表示 */
+.info {
+    background: linear-gradient(45deg, var(--chick-yellow), var(--chick-white));
+    border: 3px solid var(--chick-border);
+    padding: 15px 20px;
+    border-radius: 15px;
+    margin: 20px 0;
+    text-align: center;
+    font-weight: 600;
+}
+
+/* レスポンシブデザイン */
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+
+    h1 {
+        font-size: 2rem;
+    }
+
+    h2 {
+        font-size: 1.5rem;
+    }
+
+    .card,
+    form {
+        padding: 20px;
+    }
+
+    button,
+    input[type="submit"],
+    input[type="button"],
+    .btn {
+        padding: 12px 20px;
+        font-size: 14px;
+        width: 100%;
+        margin: 5px 0;
+    }
+
+    table {
+        font-size: 14px;
+    }
+
+    th,
+    td {
+        padding: 10px 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    h1 {
+        font-size: 1.8rem;
+    }
+
+    .card,
+    form {
+        padding: 15px;
+    }
+
+    input[type="text"],
+    input[type="search"],
+    select {
+        font-size: 16px;
+        /* iOS のズーム防止 */
+    }
+
+    table {
+        font-size: 12px;
+    }
+
+    th,
+    td {
+        padding: 8px 5px;
+    }
+}
+
+/* 特別な装飾要素 */
+.chick-decoration {
+    text-align: center;
+    font-size: 2rem;
+    margin: 20px 0;
+    opacity: 0.7;
+}
+
+/* アニメーション */
+@keyframes gentle-bounce {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-5px);
+    }
+}
+
+.bounce {
+    animation: gentle-bounce 2s infinite;
+}
+
+/* グラフ関連 */
+.graph-container {
+    background: var(--chick-white);
+    border-radius: 20px;
+    padding: 30px;
+    margin: 20px 0;
+    box-shadow: 0 8px 32px var(--chick-shadow);
+    border: 3px solid var(--chick-border);
+    text-align: center;
+}
+
+/* 検索結果 */
+.result-count {
+    background: linear-gradient(45deg, var(--chick-yellow), var(--chick-green));
+    border: 3px solid var(--chick-border);
+    padding: 15px 20px;
+    border-radius: 15px;
+    margin: 20px 0;
+    text-align: center;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+/* ナビゲーション */
+.nav-links {
+    text-align: center;
+    margin: 30px 0;
+}
+
+.nav-links a {
+    background: linear-gradient(45deg, var(--chick-green), var(--chick-yellow));
+    color: var(--chick-text);
+    padding: 12px 25px;
+    border-radius: 20px;
+    margin: 0 10px;
+    text-decoration: none;
+    font-weight: 600;
+    border: 3px solid var(--chick-border);
+    transition: all 0.3s ease;
+    display: inline-block;
+}
+
+.nav-links a:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px var(--chick-shadow);
+}
