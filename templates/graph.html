@@ -5,53 +5,27 @@
     <meta name="robots" content="none">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>グラフ表示</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/chick-theme.css') }}">
     <style>
-      body {
-        font-family: 'Arial', sans-serif;
-        background-color: #f4f4f4;
-        text-align: center;
-      }
-
-      h2 {
-        color: #2c3e50;
-        margin-top: 30px;
-      }
-
-      img {
-        border: 2px solid #aaa;
-        border-radius: 10px;
-        margin-top: 20px;
-        max-width: 80%;
-        height: auto;
-      }
-      input[type="submit"] {
-        font-size: 18px;
-        padding: 10px 20px;
-        margin: 10px 5px 0 0;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-      }
-      input[type="submit"] {
-        background-color: #006400;
-        color: #ffffff;
-	      border: solid 3px #006400;
-	      border-radius: 10px;
-      }
-      input[type="submit"]:hover{
-        background-color: #3cb371;
-        color: #ffffff;
-	      border: solid 3px #000000;
-	      border-radius: 10px;
-      }
+        .graph-title {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: var(--chick-text);
+        }
     </style>
 </head>
 <body>
-    <h2>{{ subject_name }} の成績分布</h2>
-    <img src="data:image/png;base64,{{ plot_url }}" alt="成績分布円グラフ">
-    <br>
-    <form method="POST" action="/back">
-      <input type="submit" value="検索ページに戻る">
-    </form>
+    <div class="container">
+        <div class="chick-decoration">🐣📊🐥</div>
+        <h2 class="graph-title">{{ subject_name }} の成績分布</h2>
+        
+        <div class="graph-container">
+            <img src="data:image/png;base64,{{ plot_url }}" alt="成績分布円グラフ">
+        </div>
+        
+        <form method="POST" action="/back">
+            <input type="submit" value="🔙 検索ページに戻る" class="back-btn">
+        </form>
+    </div>
 </body>
 </html>
