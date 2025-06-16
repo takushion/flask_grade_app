@@ -56,6 +56,66 @@
             margin-left: 8px;
             margin-right: 20px;
         }
+        
+        .accordion-container {
+            margin: 30px auto;
+            max-width: 800px;
+        }
+        
+        details {
+            margin-bottom: 10px;
+            border: 2px solid var(--chick-border);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        summary {
+            background: linear-gradient(45deg, var(--chick-yellow-light), var(--chick-green-light));
+            padding: 15px 20px;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--chick-text);
+            user-select: none;
+            transition: all 0.3s ease;
+        }
+        
+        summary:hover {
+            background: linear-gradient(45deg, var(--chick-yellow-dark), var(--chick-green-bright));
+            transform: translateY(-1px);
+        }
+        
+        .accordion-content {
+            padding: 20px;
+            background-color: var(--chick-bg-light);
+            border-top: 1px solid var(--chick-border);
+            overflow-x: auto; /* 横スクロールを有効にする */
+            -webkit-overflow-scrolling: touch; /* iOSでの慣性スクロール */
+        }
+        
+        /* アコーディオン内のテーブルスタイル */
+        .accordion-content table {
+            min-width: 800px; /* テーブルの最小幅を設定 */
+            width: 100%; /* 幅を100%に変更 */
+            border-collapse: collapse;
+            table-layout: fixed; /* テーブルレイアウトを固定に */
+        }
+        
+        .accordion-content th,
+        .accordion-content td {
+            white-space: normal; /* テキストの折り返しを許可 */
+            padding: 8px;
+            border: 1px solid #ddd;
+            min-width: 80px; /* セルの最小幅を設定 */
+            word-wrap: break-word; /* 長い単語を折り返し */
+            overflow-wrap: break-word; /* より新しいプロパティ */
+            max-width: 150px; /* セルの最大幅を制限 */
+        }
+        
+        /* 科目名など長いテキストが入る可能性のある列 */
+        .accordion-content td:first-child,
+        .accordion-content th:first-child {
+            max-width: 200px; /* 最初の列（科目名など）はより広く */
+        }
     </style>
 </head>
 <body>
@@ -96,26 +156,29 @@
             <a href="bookmarks">⭐ ブックマーク</a>
         </div>
     </div>
-    <div>
-    {% include 'note-1.html' %}
-    </div>
-    <div>
-    {% include 'year-1.html' %}
-    </div>
-    <div>
-    {% include 'note-2.html' %}
-    </div>
-    <div>
-    {% include 'year-2.html' %}
-    </div>
-    <div>
-    {% include 'note-3.html' %}
-    </div>
-    <div>
-    {% include 'year-34.html' %}
-    </div>
-    <div>
-    {% include 'note-4.html' %}
+    
+    <div class="accordion-container">
+        <h2>時間割</h2>
+        <details>
+            <summary>1年次</summary>
+            <div class="accordion-content">
+                {% include 'year-1.html' %}
+            </div>
+        </details>
+
+        <details>
+            <summary>2年次</summary>
+            <div class="accordion-content">
+                {% include 'year-2.html' %}
+            </div>
+        </details>
+
+        <details>
+            <summary>3-4年次</summary>
+            <div class="accordion-content">
+                {% include 'year-34.html' %}
+            </div>
+        </details>
     </div>
 </body>
 </html>
