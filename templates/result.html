@@ -70,7 +70,7 @@
         
         <div class="nav-links">
             <a href="{{ url_for('report') }}">🔙 検索ページに戻る</a>
-            <a href="{{ url_for('bookmarks_page') }}">⭐ ブックマーク一覧</a>
+            <a href="{{ url_for('bookmarks_page') }}">🔖 ブックマーク一覧</a>
 
         </div>
         <div class="description">
@@ -104,7 +104,7 @@
                                        data-subject-id="{{ result['科⽬番号'] | string }}" 
                                        data-subject-name="{{ result['科⽬名称'] }}"
                                        onchange="toggleBookmark(this)">
-                                ⭐ ブックマーク
+                                🔖 ブックマーク
                             </label>
                         </div>
                     </div>
